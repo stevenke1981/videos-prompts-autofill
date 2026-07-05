@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowUpDown,
   ChevronDown,
@@ -13,17 +13,20 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
-import { COMMUNITY_PROMPTS } from '../data/communityPrompts';
 import {
-  getPlatformCategories,
-  getPlatformCategoryLabel,
-  normalizeCommunityCategory,
-} from '../services/communitySearch';
+  COMMUNITY_PLATFORM_COUNT,
+  COMMUNITY_PLATFORM_MANIFEST,
+} from '../data/communityPlatformManifest';
+import {
+  communityCatalogLoader,
+  mergeCommunityPlatformPayload,
+} from '../services/communityCatalogLoader';
 import {
   buildDiscoveryFeed,
   DISCOVERY_PAGE_SIZE,
   filterDiscoveryFeed,
 } from '../utils/discoveryFeed';
+import { getLocalized } from '../utils/helpers';
 
 const SOURCE_OPTIONS = [
   { value: 'all', labelKey: 'discovery_source_all', icon: Layers3 },
@@ -39,12 +42,8 @@ const SORT_OPTIONS = [
   { value: 'random', labelKey: 'sort_random' },
 ];
 
-const TemplateCard = ({ item, language, t, onSelect }) => {
+const TemplateCard = ({ item, categoryLabel, t, onSelect }) => {
   const isCommunity = item.source === 'community';
-  const categoryLabel =
-    isCommunity && item.category
-      ? getPlatformCategoryLabel(item.platform, item.category, language)
-      : '';
 
   return (
     <button
@@ -144,22 +143,46 @@ export const DiscoveryView = React.memo(
     const [platform, setPlatform] = useState('all');
     const [category, setCategory] = useState('all');
     const [visibleCount, setVisibleCount] = useState(DISCOVERY_PAGE_SIZE);
+    const [communityPlatforms, setCommunityPlatforms] = useState({});
+    const [loadingPlatforms, setLoadingPlatforms] = useState([]);
+    const [platformErrors, setPlatformErrors] = useState({});
 
+    const communityPrompts = useMemo(
+      () =>
+        COMMUNITY_PLATFORM_MANIFEST.flatMap(
+          ({ id }) => communityPlatforms[id]?.prompts || []
+        ),
+      [communityPlatforms]
+    );
     const feed = useMemo(
       () =>
         buildDiscoveryFeed({
           templates: filteredTemplates,
-          community: COMMUNITY_PROMPTS,
+          community: communityPrompts,
           language,
         }),
-      [filteredTemplates, language]
+      [filteredTemplates, communityPrompts, language]
     );
 
     const platforms = useMemo(
-      () => ['all', ...new Set(feed.map((item) => item.platform).filter(Boolean))],
-      [feed]
+      () => ['all', ...COMMUNITY_PLATFORM_MANIFEST.map(({ id }) => id)],
+      []
     );
-    const categories = useMemo(() => getPlatformCategories(platform), [platform]);
+    const categories = communityPlatforms[platform]?.categories || [];
+    const categoryLabels = useMemo(() => {
+      const labels = new Map();
+      Object.values(communityPlatforms).forEach((payload) => {
+        payload.categories.forEach((itemCategory) => {
+          labels.set(
+            `${payload.platformId}:${itemCategory.id}`,
+            getLocalized(itemCategory.label, language)
+          );
+        });
+      });
+      return labels;
+    }, [communityPlatforms, language]);
+    const loadedPlatformCount = Object.keys(communityPlatforms).length;
+    const catalogComplete = loadedPlatformCount === COMMUNITY_PLATFORM_COUNT;
 
     const result = useMemo(
       () =>
@@ -177,9 +200,70 @@ export const DiscoveryView = React.memo(
       setVisibleCount(DISCOVERY_PAGE_SIZE);
     }, [query, source, platform, category, language]);
 
+    const loadCommunityPlatform = useCallback(async (platformId) => {
+      if (!platformId || platformId === 'all') return null;
+
+      setLoadingPlatforms((current) =>
+        current.includes(platformId) ? current : [...current, platformId]
+      );
+      setPlatformErrors((current) => {
+        const next = { ...current };
+        delete next[platformId];
+        return next;
+      });
+
+      try {
+        const payload = await communityCatalogLoader.loadPlatform(platformId);
+        setCommunityPlatforms((current) => mergeCommunityPlatformPayload(current, payload));
+        return payload;
+      } catch (error) {
+        setPlatformErrors((current) => ({
+          ...current,
+          [platformId]: error instanceof Error ? error.message : String(error),
+        }));
+        return null;
+      } finally {
+        setLoadingPlatforms((current) => current.filter((id) => id !== platformId));
+      }
+    }, []);
+
+    useEffect(() => {
+      let active = true;
+      const timer = window.setTimeout(() => {
+        communityCatalogLoader.loadAll({
+          onPlatformLoaded: (payload) => {
+            if (!active) return;
+            setCommunityPlatforms((current) =>
+              mergeCommunityPlatformPayload(current, payload)
+            );
+            setPlatformErrors((current) => {
+              const next = { ...current };
+              delete next[payload.platformId];
+              return next;
+            });
+          },
+          onPlatformError: (platformId, error) => {
+            if (!active) return;
+            setPlatformErrors((current) => ({
+              ...current,
+              [platformId]: error instanceof Error ? error.message : String(error),
+            }));
+          },
+        });
+      }, 0);
+
+      return () => {
+        active = false;
+        window.clearTimeout(timer);
+      };
+    }, []);
+
     const handlePlatformChange = (nextPlatform) => {
       setPlatform(nextPlatform);
-      setCategory((current) => normalizeCommunityCategory(nextPlatform, current));
+      setCategory('all');
+      if (nextPlatform !== 'all') {
+        loadCommunityPlatform(nextPlatform);
+      }
     };
 
     const handleSelect = (item) => {
@@ -329,6 +413,7 @@ export const DiscoveryView = React.memo(
                 <button
                   key={itemPlatform}
                   type="button"
+                  data-testid={`platform-filter-${itemPlatform}`}
                   onClick={() => handlePlatformChange(itemPlatform)}
                   className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition ${
                     platform === itemPlatform
@@ -365,15 +450,55 @@ export const DiscoveryView = React.memo(
                         : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300'
                     }`}
                   >
-                    {getPlatformCategoryLabel(platform, itemCategory.id, language)}
+                    {categoryLabels.get(`${platform}:${itemCategory.id}`) ||
+                      itemCategory.id}
                   </button>
                 ))}
               </div>
             )}
 
             <p className="px-1 text-xs font-medium text-slate-500 dark:text-slate-400">
-              {result.all.length} {t('discovery_results')}
+              {result.all.length}{' '}
+              {catalogComplete ? t('discovery_results') : t('community_partial_results')}
             </p>
+            <div
+              data-testid="community-load-status"
+              aria-live="polite"
+              className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-100/80 px-3 py-2 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-200"
+            >
+              <span>
+                {catalogComplete
+                  ? t('community_load_complete')
+                  : t('community_loading_progress')}{' '}
+                {loadedPlatformCount}/{COMMUNITY_PLATFORM_COUNT}
+              </span>
+              {Object.keys(platformErrors).length > 0 && (
+                <span className="text-red-600 dark:text-red-300">
+                  {Object.keys(platformErrors).length} {t('community_platform_errors')}
+                </span>
+              )}
+            </div>
+
+            {platform !== 'all' && platformErrors[platform] && (
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                <span>{t('community_platform_load_failed')}</span>
+                <button
+                  type="button"
+                  onClick={() => loadCommunityPlatform(platform)}
+                  className="rounded-lg bg-red-600 px-3 py-1.5 font-bold text-white hover:bg-red-700"
+                >
+                  {t('retry')}
+                </button>
+              </div>
+            )}
+
+            {platform !== 'all' &&
+              loadingPlatforms.includes(platform) &&
+              !communityPlatforms[platform] && (
+                <p className="text-xs font-bold text-orange-600">
+                  {t('community_selected_platform_loading')}
+                </p>
+              )}
           </section>
 
           {result.visible.length > 0 ? (
@@ -385,7 +510,7 @@ export const DiscoveryView = React.memo(
                 <TemplateCard
                   key={item.key}
                   item={item}
-                  language={language}
+                  categoryLabel={categoryLabels.get(`${item.platform}:${item.category}`) || ''}
                   t={t}
                   onSelect={handleSelect}
                 />

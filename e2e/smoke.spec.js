@@ -58,6 +58,9 @@ test.describe('Video Prompts Autofill smoke E2E', () => {
     await page.goto('/');
     await dismissUpdateDialogs(page);
 
+    await expect(page.getByTestId('community-load-status')).toBeVisible();
+    await page.getByTestId('platform-filter-seedance').click();
+
     const search = page.getByPlaceholder(/搜尋所有模板與社群|Search templates and community/i);
     await expect(search).toBeVisible({ timeout: 15000 });
     await search.fill('cinematic');

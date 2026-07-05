@@ -7,6 +7,7 @@
     "dev": "vite --host",
     "dev:open": "vite --host --open",
     "build": "vite build",
+    "build:check": "npm run build && node scripts/check-bundle-size.mjs",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest run",

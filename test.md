@@ -6,9 +6,9 @@
 
 | 層級 | 工具 | 範圍 |
 |------|------|------|
-| 單元 | Vitest | promptEngine、merge、helpers、storage、deliverables、seedData、communitySearch、discoveryFeed |
+| 單元 | Vitest | promptEngine、merge、helpers、storage、deliverables、seedData、communitySearch、discoveryFeed、communityCatalogLoader |
 | 靜態檢查 | ESLint | JavaScript / JSX runtime 與 React 規則 |
-| 建置 | vite build | 生產打包 |
+| 建置 | vite build + bundle gate | 生產打包、平台 chunk 與 500 KiB 上限 |
 | E2E | Playwright | 統一瀑布流、填空、複製、社群匯入、詞庫、深色模式 |
 | 手動 | 瀏覽器 | 各平台模板內容正確性 |
 
@@ -19,7 +19,7 @@
 ```bash
 npm test              # Vitest
 npm run lint          # ESLint
-npm run build         # 建置
+npm run build:check   # 建置 + 每個 JS chunk 500 KiB 上限
 npm run test:e2e      # Playwright（需 install chromium）
 npm run dev           # 開發伺服器 :1420
 ```
@@ -73,7 +73,17 @@ npm run dev           # 開發伺服器 :1420
 | MG-07 | 使用者自訂封面 | data URL / 外部 URL 保留 |
 | MG-08 | 舊 bundled JPG | 升級為目前生成封面 |
 
-### 3.7 其餘（helpers、storage、useKeyboardShortcuts）— 沿用
+### 3.7 communityCatalogLoader.js
+
+| ID | 案例 | 預期 |
+|----|------|------|
+| CL-01 | production manifest | 10 個唯一平台、總數 1,000、順序固定 |
+| CL-02 | 同平台並行載入 | 共用同一個 in-flight Promise |
+| CL-03 | 平台載入失敗後重試 | 移除失敗快取，下一次可成功 |
+| CL-04 | 背景載入部分失敗 | 其他平台繼續載入，錯誤限於單一平台 |
+| CL-05 | 合併同平台 payload | 取代該平台 slice，不重複提示詞 |
+
+### 3.8 其餘（helpers、storage、useKeyboardShortcuts）— 沿用
 
 ---
 
@@ -81,7 +91,7 @@ npm run dev           # 開發伺服器 :1420
 
 1. 首頁標題含「Video」
 2. 發現頁 → 選 Seedance 模板 → 複製 Prompt（剪貼簿非空，含 Subject/主體）
-3. 原始發現頁搜尋 "cinematic" → 同一瀑布流顯示社群卡片 → 選中後進入編輯器
+3. 等待漸進載入狀態 → 切換 Seedance 平台 → 搜尋 "cinematic" → 同一瀑布流顯示社群卡片 → 選中後進入編輯器
 4. 返回編輯器 → 詞庫搜尋過濾
 5. 設定 → 深色模式 `html.dark`
 
@@ -105,6 +115,8 @@ npm run dev           # 開發伺服器 :1420
 - [x] 來源、平台與分類篩選可組合
 - [x] 點社群卡片後才建立本機模板
 - [x] 「載入更多」以 24 筆為增量
+- [x] 社群 catalog 依平台分割並顯示 10 平台載入進度
+- [x] 選定平台優先載入，單一平台失敗可重試
 
 ### 5.4 編輯
 - [ ] 切換編輯模式
@@ -125,19 +137,19 @@ npm run dev           # 開發伺服器 :1420
 
 - `npm test` 0 failure
 - `npm run lint` 0 error / 0 warning
-- `npm run build` exit 0
+- `npm run build:check` exit 0，任何 JS chunk 均不超過 500 KiB
 - E2E smoke 全過
 - 生成封面路徑與檔案存在性測試全過
 
 ---
 
-## 7. 2026-07-05 實際驗證結果
+## 7. 2026-07-06 實際驗證結果
 
 | 指令 | 結果 |
 |------|------|
-| `npm test` | ✅ 9 files / 60 tests |
+| `npm test` | ✅ 10 files / 66 tests |
 | `npm run lint` | ✅ 0 error / 0 warning |
-| `npm run build` | ✅ 通過；保留單一大 chunk 警告 |
+| `npm run build:check` | ✅ 14 個 JS chunks；入口 202,829 bytes；全部低於 500 KiB |
 | `npm run test:e2e` | ✅ 4/4 |
 
-非阻斷提示：`caniuse-lite` 約 7 個月未更新；production JS 為 874.18 kB（gzip 202.90 kB）。
+改善前 production JS 入口為 874,180 bytes；改善後為 202,829 bytes，縮小約 76.8%。非阻斷提示：`caniuse-lite` 約 7 個月未更新。

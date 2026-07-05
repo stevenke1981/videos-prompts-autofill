@@ -31,5 +31,14 @@ export default defineConfig({
     minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
     // 為調試建構生成源代碼映射
     sourcemap: !!process.env.TAURI_DEBUG,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          icons: ['lucide-react'],
+          html2canvas: ['html2canvas'],
+        },
+      },
+    },
   },
 })

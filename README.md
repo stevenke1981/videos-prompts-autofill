@@ -8,6 +8,7 @@
 - **影片詞庫**：主體、動作、場景、鏡頭、音效、風格、技術參數
 - **平台模板**：15+ 內建模板（Seedance / Kling / Grok / Runway / Sora…）
 - **統一瀑布流**：15 個內建模板與 1,000 筆社群提示詞共用搜尋、來源、平台與分類篩選
+- **平台分割載入**：社群資料依 10 個平台動態載入；內建模板先顯示，失敗平台可單獨重試
 - **按需匯入**：社群模板選中後才加入本機編輯資料，不污染 LocalStorage
 - **專屬生成封面**：15 張 Codex 內建生圖製作、WebP 最佳化的影片題材封面
 - **Video Specs**：時長、畫幅、FPS、負向提示標準區段
@@ -29,9 +30,11 @@ Windows 可雙擊 `start.bat` 一鍵啟動。
 ```bash
 npm test
 npm run lint
-npm run build
+npm run build:check
 npm run test:e2e
 ```
+
+`build:check` 會在建置後檢查每個 JavaScript chunk 不得超過 500 KiB。
 
 ## 文件
 

@@ -1,7 +1,7 @@
 # Video Prompts Autofill — 交付摘要
 
 > 狀態：**全部完成**  
-> 最後更新：2026-07-05
+> 最後更新：2026-07-06
 
 ---
 
@@ -15,8 +15,8 @@
 
 | 檢查項 | 結果 |
 |--------|------|
-| `npm run build` | ✅ 通過 |
-| `npm test`（Vitest） | ✅ 60/60（9 files） |
+| `npm run build:check` | ✅ 14 個 JS chunks，全部低於 500 KiB |
+| `npm test`（Vitest） | ✅ 66/66（10 files） |
 | `npm run lint`（ESLint） | ✅ 0 error / 0 warning |
 | `npm run test:e2e`（Playwright） | ✅ 4/4 |
 | 開發伺服器 | ✅ http://localhost:1420 |
@@ -43,6 +43,8 @@
 | 新生成模板封面 | 15 | ✅ |
 | 封面總大小 | 約 1.60 MiB WebP | ✅ |
 | 首次卡片渲染 | 24 筆 | ✅ |
+| 社群平台動態 chunks | 10 | ✅ |
+| 主入口 JavaScript | 202,829 bytes（改善前 874,180） | ✅ |
 
 ### 本次 CBM 改善
 
@@ -54,6 +56,10 @@
 - 新增 ESLint 設定並修復 case scope、LocalStorage prototype 與外部連結安全問題。
 - 使用 Codex 內建生圖生成 15 張影片主題封面；原始約 35 MB PNG 最佳化為合計 1,674,558 bytes 的 WebP。
 - `SYSTEM_DATA_VERSION` 升至 1.1.0；舊 bundled JPG 自動遷移，使用者自訂圖片保留。
+- 社群 catalog 依 general、Seedance、Kling、Grok、Runway、Sora、Pika、MiniMax、Luma、Hailuo 分割載入。
+- 新增共用 in-flight Promise、成功快取、平台局部錯誤與重試；切換平台會優先載入該平台。
+- 新增 `build:check`，每個 production JavaScript chunk 上限為 500 KiB。
+- 入口 chunk 從 874,180 降至 202,829 bytes，縮小約 76.8%。
 
 ### 內建模板一覽
 
@@ -87,8 +93,8 @@
 ```bash
 npm install
 npm run dev          # http://localhost:1420
-npm run build
-npm test             # 60 案例
+npm run build:check
+npm test             # 66 案例
 npm run lint
 npm run test:e2e     # 4 smoke 案例
 ```
@@ -105,12 +111,13 @@ npm run test:e2e     # 4 smoke 案例
 - [CBM 檢視與改善報告](./docs/cbm-review-2026-07-05.md)
 - [統一瀑布流設計](./docs/superpowers/specs/2026-07-05-unified-template-waterfall-design.md)
 - [統一瀑布流實作計畫](./docs/superpowers/plans/2026-07-05-unified-template-waterfall.md)
+- [平台分割載入設計](./docs/superpowers/specs/2026-07-06-platform-lazy-community-catalog-design.md)
+- [平台分割載入實作計畫](./docs/superpowers/plans/2026-07-06-platform-lazy-community-catalog.md)
 
 ---
 
 ## 6. 已知後續工作
 
-- Production JS 仍為單一 874.18 kB chunk（gzip 202.90 kB）；建議下一階段按平台動態載入社群資料。
 - `caniuse-lite` 約 7 個月未更新，應於獨立 dependency-maintenance commit 更新。
 - `App.jsx` 約 100 KB；建議先抽離匯入匯出與 File System Access service，再逐步恢復嚴格 unused / Hook dependency lint 規則。
 

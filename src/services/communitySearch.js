@@ -8,6 +8,7 @@ import {
   SORA_CATEGORIES,
 } from '../data/communityPrompts';
 import { getLocalized } from '../utils/helpers';
+export { communityPromptToTemplate } from './communityTemplate';
 
 export {
   COMMUNITY_DATA_VERSION,
@@ -101,21 +102,3 @@ export const getSoraCategoryLabel = (categoryId, language = 'zh-tw') =>
 
 export const getPlatformCategoryLabel = (platform, categoryId, language = 'zh-tw') =>
   getCategoryLabel(platform, categoryId, language);
-
-/**
- * 將社群提示詞轉為可編輯模板
- */
-export const communityPromptToTemplate = (item, language = 'zh-tw') => {
-  const title = getLocalized(item.title, language);
-  const prompt = getLocalized(item.prompt, language);
-
-  return {
-    id: `tpl_community_${item.id}_${Date.now()}`,
-    name: `${title}（社群）`,
-    content: prompt,
-    selections: {},
-    tags: [item.platform, ...(item.tags || [])].filter((v, i, a) => a.indexOf(v) === i),
-    author: item.author || item.source,
-    language: ['zh-tw', 'en'],
-  };
-};

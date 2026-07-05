@@ -30,6 +30,7 @@ import { KLING_PROMPTS } from '../data/klingPrompts';
 import { GROK_IMAGINE_PROMPTS } from '../data/grokImaginePrompts';
 import { RUNWAY_PROMPTS } from '../data/runwayPrompts';
 import { SORA_PROMPTS } from '../data/soraPrompts';
+import { communityPromptToTemplate as lightweightCommunityPromptToTemplate } from '../services/communityTemplate';
 
 describe('communitySearch', () => {
   it('has exactly 300 prompts per major platform', () => {
@@ -123,6 +124,22 @@ describe('communitySearch', () => {
     const template = communityPromptToTemplate(item, 'zh-tw');
     expect(template.id).toMatch(/^tpl_community_/);
     expect(template.tags).toContain('seedance');
+  });
+
+  it('converts a community item from the catalog-independent module', () => {
+    const item = {
+      id: 'fixture',
+      title: { 'zh-tw': '測試', en: 'Fixture' },
+      prompt: { 'zh-tw': '提示', en: 'Prompt' },
+      platform: 'seedance',
+      tags: ['cinematic'],
+      author: 'Author',
+    };
+
+    const template = lightweightCommunityPromptToTemplate(item, 'en');
+
+    expect(template.name).toBe('Fixture（社群）');
+    expect(template.tags).toEqual(['seedance', 'cinematic']);
   });
 
   it('has community data version 1.3.0', () => {
