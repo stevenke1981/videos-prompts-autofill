@@ -7,8 +7,9 @@
 - **模板引擎**：`{{variable}}` 語法、多實例索引、雙語 zh-tw / en
 - **影片詞庫**：主體、動作、場景、鏡頭、音效、風格、技術參數
 - **平台模板**：15+ 內建模板（Seedance / Kling / Grok / Runway / Sora…）
-- **社群搜尋**：30+ 精選社群提示詞，可搜尋、複製、一鍵匯入模板
-- **發現頁**：瀑布流模板瀏覽、平台標籤篩選
+- **統一瀑布流**：15 個內建模板與 1,000 筆社群提示詞共用搜尋、來源、平台與分類篩選
+- **按需匯入**：社群模板選中後才加入本機編輯資料，不污染 LocalStorage
+- **專屬生成封面**：15 張 Codex 內建生圖製作、WebP 最佳化的影片題材封面
 - **Video Specs**：時長、畫幅、FPS、負向提示標準區段
 - **本機優先**：LocalStorage + IndexedDB，無需登入
 
@@ -27,6 +28,7 @@ Windows 可雙擊 `start.bat` 一鍵啟動。
 
 ```bash
 npm test
+npm run lint
 npm run build
 npm run test:e2e
 ```
@@ -38,6 +40,7 @@ npm run test:e2e
 - [test.md](./test.md) — 測試計畫
 - [todos.md](./todos.md) — 實作進度
 - [final.md](./final.md) — 交付摘要
+- [docs/cbm-review-2026-07-05.md](./docs/cbm-review-2026-07-05.md) — CBM 檢視與改善報告
 
 ## 致謝
 

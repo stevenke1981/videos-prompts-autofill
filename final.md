@@ -16,15 +16,16 @@
 | 檢查項 | 結果 |
 |--------|------|
 | `npm run build` | ✅ 通過 |
-| `npm test`（Vitest） | ✅ 43/43 |
+| `npm test`（Vitest） | ✅ 60/60（9 files） |
+| `npm run lint`（ESLint） | ✅ 0 error / 0 warning |
 | `npm run test:e2e`（Playwright） | ✅ 4/4 |
 | 開發伺服器 | ✅ http://localhost:1420 |
 
 ### E2E 覆蓋流程
 
 1. 發現頁 → 選「Seedance 2.0 通用公式」→ 複製 Prompt（含 Subject/主體）
-2. 社群 Tab → 搜尋 "cinematic" → 結果可見
-3. 詞庫搜尋 `camera_movement`
+2. 原始發現頁搜尋 "cinematic" → 同一瀑布流顯示社群模板 → 選中後進入編輯器
+3. 返回編輯器 → 詞庫搜尋 `camera_movement`
 4. 設定 → 深色模式切換
 
 ---
@@ -37,8 +38,22 @@
 | 詞庫組 | 40 | ✅ |
 | 分類 | 7（主體/動作/場景/鏡頭/音效/風格/技術） | ✅ |
 | Video Specs 區段 | 影片版 | ✅ |
-| 社群提示詞 | 35 | ✅ |
-| 社群搜尋 UI | CommunitySearchPanel | ✅ |
+| 社群提示詞 | 1,000 | ✅ |
+| 統一瀑布流 | 內建 + 社群 | ✅ |
+| 新生成模板封面 | 15 | ✅ |
+| 封面總大小 | 約 1.60 MiB WebP | ✅ |
+| 首次卡片渲染 | 24 筆 | ✅ |
+
+### 本次 CBM 改善
+
+- 移除獨立社群 Tab 與已無 runtime 使用者的 `CommunitySearchPanel`。
+- 新增 `discoveryFeed` 純函式層，統一搜尋、來源、平台與分類篩選。
+- 社群資料不預先寫入 LocalStorage，選中後才轉成可編輯模板。
+- 修復切換平台時 category 殘留造成的空結果。
+- 修復 4 個匯出流程呼叫未定義 `showToastMessage` 的 runtime 錯誤。
+- 新增 ESLint 設定並修復 case scope、LocalStorage prototype 與外部連結安全問題。
+- 使用 Codex 內建生圖生成 15 張影片主題封面；原始約 35 MB PNG 最佳化為合計 1,674,558 bytes 的 WebP。
+- `SYSTEM_DATA_VERSION` 升至 1.1.0；舊 bundled JPG 自動遷移，使用者自訂圖片保留。
 
 ### 內建模板一覽
 
@@ -73,7 +88,8 @@
 npm install
 npm run dev          # http://localhost:1420
 npm run build
-npm test             # 43 案例
+npm test             # 60 案例
+npm run lint
 npm run test:e2e     # 4 smoke 案例
 ```
 
@@ -86,10 +102,21 @@ npm run test:e2e     # 4 smoke 案例
 - [test.md](./test.md)
 - [todos.md](./todos.md)
 - [README.md](./README.md)
+- [CBM 檢視與改善報告](./docs/cbm-review-2026-07-05.md)
+- [統一瀑布流設計](./docs/superpowers/specs/2026-07-05-unified-template-waterfall-design.md)
+- [統一瀑布流實作計畫](./docs/superpowers/plans/2026-07-05-unified-template-waterfall.md)
 
 ---
 
-## 6. 致謝
+## 6. 已知後續工作
+
+- Production JS 仍為單一 874.18 kB chunk（gzip 202.90 kB）；建議下一階段按平台動態載入社群資料。
+- `caniuse-lite` 約 7 個月未更新，應於獨立 dependency-maintenance commit 更新。
+- `App.jsx` 約 100 KB；建議先抽離匯入匯出與 File System Access service，再逐步恢復嚴格 unused / Hook dependency lint 規則。
+
+---
+
+## 7. 致謝
 
 - [stevenke1981/prompt-autofill](https://github.com/stevenke1981/prompt-autofill)
 - [stevenke1981/agent-prompt-fill](https://github.com/stevenke1981/agent-prompt-fill)

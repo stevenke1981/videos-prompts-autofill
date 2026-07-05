@@ -10,6 +10,7 @@ import {
   getRunwayCategories,
   getSoraCategories,
   getPlatformCategoryLabel,
+  normalizeCommunityCategory,
 } from '../services/communitySearch';
 import {
   COMMUNITY_PROMPTS,
@@ -152,5 +153,11 @@ describe('communitySearch', () => {
     expect(platforms).toContain('luma');
     expect(platforms).toContain('hailuo');
     expect(platforms).toContain('general');
+  });
+
+  it('resets a category that does not belong to the selected platform', () => {
+    expect(normalizeCommunityCategory('seedance', 'multimodal')).toBe('multimodal');
+    expect(normalizeCommunityCategory('kling', 'multimodal')).toBe('all');
+    expect(normalizeCommunityCategory('all', 'cinematic')).toBe('all');
   });
 });

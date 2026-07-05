@@ -54,16 +54,25 @@ test.describe('Video Prompts Autofill smoke E2E', () => {
     expect(clipboardText).toMatch(/Subject|主體/i);
   });
 
-  test('community search finds cinematic prompts', async ({ page }) => {
+  test('community templates share the original discovery waterfall', async ({ page }) => {
     await page.goto('/');
     await dismissUpdateDialogs(page);
 
-    await page.getByRole('button', { name: /社群|Community/i }).click();
-
-    const search = page.getByPlaceholder(/搜尋社群|Search community/i);
+    const search = page.getByPlaceholder(/搜尋所有模板與社群|Search templates and community/i);
     await expect(search).toBeVisible({ timeout: 15000 });
     await search.fill('cinematic');
     await expect(search).toHaveValue('cinematic');
+
+    const grid = page.getByTestId('unified-discovery-grid');
+    await expect(grid).toBeVisible();
+    const communityCard = grid.getByTestId('community-template-card').first();
+    await expect(communityCard).toBeVisible();
+    await expect(communityCard).toContainText(/使用社群模板|Use community template/i);
+    await communityCard.click();
+
+    await expect(page.getByRole('button', { name: /預覽互動|Preview/i })).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test('banks search filters options', async ({ page }) => {

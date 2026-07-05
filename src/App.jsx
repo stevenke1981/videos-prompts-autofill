@@ -759,7 +759,7 @@ const App = () => {
             return nameA.localeCompare(nameB, language === 'zh-tw' ? 'zh-TW' : 'en');
           case 'z-a':
             return nameB.localeCompare(nameA, language === 'zh-tw' ? 'zh-TW' : 'en');
-          case 'random':
+          case 'random': {
             // 使用模板 ID 與隨機種子生成偽隨機數排序
             const hashA = (a.id + randomSeed)
               .split('')
@@ -768,6 +768,7 @@ const App = () => {
               .split('')
               .reduce((acc, char) => acc + char.charCodeAt(0), 0);
             return hashA - hashB;
+          }
           default:
             return 0;
         }
@@ -903,7 +904,7 @@ const App = () => {
               title: templateName,
               text: '匯出的提示詞模板',
             });
-            showToastMessage('✅ 模板已分享／儲存');
+            addToast('✅ 模板已分享／儲存', 'success');
             return;
           }
         } catch (shareError) {
@@ -931,7 +932,7 @@ const App = () => {
         URL.revokeObjectURL(url);
       }, 100);
 
-      showToastMessage('✅ 模板已匯出');
+      addToast('✅ 模板已匯出', 'success');
     } catch (error) {
       console.error('匯出失敗:', error);
       addToast('匯出失敗，請重試', 'error');
@@ -968,7 +969,7 @@ const App = () => {
               title: 'Video Prompts Autofill 備份',
               text: '所有模板和詞庫的完整備份',
             });
-            showToastMessage('✅ 備份已分享／儲存');
+            addToast('✅ 備份已分享／儲存', 'success');
             return;
           }
         } catch (shareError) {
@@ -996,7 +997,7 @@ const App = () => {
         URL.revokeObjectURL(url);
       }, 100);
 
-      showToastMessage('✅ 備份已匯出');
+      addToast('✅ 備份已匯出', 'success');
     } catch (error) {
       console.error('匯出失敗:', error);
       addToast('匯出失敗，請重試', 'error');
@@ -1142,7 +1143,7 @@ const App = () => {
     try {
       let total = 0;
       for (let key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
           total += localStorage[key].length + key.length;
         }
       }
@@ -1693,7 +1694,6 @@ const App = () => {
     if (isShareMode) {
       exitShareMode();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTemplateId]);
 
   const handleExportImage = async () => {

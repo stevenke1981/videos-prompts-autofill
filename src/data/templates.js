@@ -3,7 +3,7 @@
  */
 import { withDeliverables } from '../constants/deliverables';
 
-export const SYSTEM_DATA_VERSION = '1.0.0';
+export const SYSTEM_DATA_VERSION = '1.1.0';
 
 export const TEMPLATE_TAGS = [
   'seedance',
@@ -63,7 +63,7 @@ const RAW_TEMPLATES_CONFIG = [
     name: { 'zh-tw': 'Seedance 2.0 通用公式', en: 'Seedance 2.0 General Formula' },
     tags: ['seedance', 'cinematic'],
     platform: 'seedance',
-    imageUrl: './template-covers/agent-system.jpg',
+    imageUrl: './template-covers/video/seedance-general.webp',
     language: ['zh-tw', 'en'],
     content: DEFAULT_TEMPLATE_CONTENT,
     selections: {
@@ -75,7 +75,7 @@ const RAW_TEMPLATES_CONFIG = [
     name: { 'zh-tw': 'Seedance 多模態參考', en: 'Seedance Multimodal Reference' },
     tags: ['seedance', 'i2v'],
     platform: 'seedance',
-    imageUrl: './template-covers/feature-implementation.jpg',
+    imageUrl: './template-covers/video/seedance-multimodal.webp',
     content: {
       'zh-tw': `{{reference_image}}，{{reference_instruction}}。
 
@@ -96,7 +96,7 @@ Maintain consistent reference features with natural language motion details.`,
     name: { 'zh-tw': 'Seedance 影片編輯', en: 'Seedance Video Editing' },
     tags: ['seedance'],
     platform: 'seedance',
-    imageUrl: './template-covers/safe-refactor.jpg',
+    imageUrl: './template-covers/video/seedance-video-edit.webp',
     content: {
       'zh-tw': `### 編輯指令
 {{edit_operation}}：{{edit_target}}。
@@ -127,7 +127,7 @@ Keep camera movement and pacing unchanged; only modify specified elements.
     name: { 'zh-tw': 'Seedance 對話字幕', en: 'Seedance Dialogue & Subtitles' },
     tags: ['seedance', 'dialogue'],
     platform: 'seedance',
-    imageUrl: './template-covers/novelist-crew.jpg',
+    imageUrl: './template-covers/video/seedance-dialogue.webp',
     content: {
       'zh-tw': `{{subject}} 在 {{environment}} 中與他人交談。
 {{subject}} 說：{{dialogue_line}}。
@@ -148,7 +148,7 @@ Tone {{narrative_tone}}, lighting {{lighting}}.
     name: { 'zh-tw': 'Kling 電影感場景', en: 'Kling Cinematic Scene' },
     tags: ['kling', 'cinematic'],
     platform: 'kling',
-    imageUrl: './template-covers/deep-research-team.jpg',
+    imageUrl: './template-covers/video/kling-cinematic.webp',
     content: {
       'zh-tw': `【主體】{{subject}}，{{subject_emotion}}
 【動作】{{subject_action}}，{{motion_type}}
@@ -172,7 +172,7 @@ Tone {{narrative_tone}}, lighting {{lighting}}.
     name: { 'zh-tw': 'Kling 產品廣告', en: 'Kling Product Ad' },
     tags: ['kling', 'product', 'commercial'],
     platform: 'kling',
-    imageUrl: './template-covers/creative-studio.jpg',
+    imageUrl: './template-covers/video/kling-product-ad.webp',
     content: {
       'zh-tw': `{{product_focus}}：{{subject}} 置於 {{environment}}。
 {{camera_movement}} 展示產品細節，{{lighting}} 突顯質感。
@@ -189,7 +189,7 @@ Background music: {{audio_music}}.`,
     name: { 'zh-tw': 'Kling 動作參考', en: 'Kling Action Reference' },
     tags: ['kling', 'cinematic'],
     platform: 'kling',
-    imageUrl: './template-covers/react-tools.jpg',
+    imageUrl: './template-covers/video/kling-action-reference.webp',
     content: {
       'zh-tw': `{{reference_video}}，生成 {{action_intensity}} 場景。
 {{subject}} 在 {{environment}} 中 {{subject_action}}。
@@ -206,7 +206,7 @@ Camera language from Video 1: {{camera_movement}}.
     name: { 'zh-tw': 'Grok Imagine 創意短片', en: 'Grok Imagine Creative Short' },
     tags: ['grok', 'cinematic'],
     platform: 'grok',
-    imageUrl: './template-covers/creative-studio.jpg',
+    imageUrl: './template-covers/video/grok-creative-short.webp',
     content: {
       'zh-tw': `{{grok_style}} 風格的 {{duration}} 短片。
 {{subject}} {{subject_action}} 於 {{environment}}。
@@ -226,7 +226,7 @@ Concise visual metaphor, {{camera_shot}}.`,
     name: { 'zh-tw': 'Runway Gen-3 敘事', en: 'Runway Gen-3 Narrative' },
     tags: ['runway', 'cinematic'],
     platform: 'runway',
-    imageUrl: './template-covers/task-plan.jpg',
+    imageUrl: './template-covers/video/runway-narrative.webp',
     content: {
       'zh-tw': `Cinematic {{duration}} sequence.
 {{camera_movement}} through {{environment}} at {{time_of_day}}.
@@ -245,7 +245,7 @@ Sound design: {{audio_ambient}}.`,
     name: { 'zh-tw': 'Sora 風格敘事', en: 'Sora-Style Narrative' },
     tags: ['sora', 'cinematic'],
     platform: 'sora',
-    imageUrl: './template-covers/hierarchical-team.jpg',
+    imageUrl: './template-covers/video/sora-style-story.webp',
     content: {
       'zh-tw': `物理真實的 {{duration}} 長鏡頭。
 {{environment}}，{{weather}}，{{time_of_day}}。
@@ -264,7 +264,7 @@ One-shot {{camera_movement}}, {{depth_of_field}}.
     name: { 'zh-tw': '動漫打鬥場景', en: 'Anime Action Scene' },
     tags: ['anime', 'kling'],
     platform: 'kling',
-    imageUrl: './template-covers/react-tools.jpg',
+    imageUrl: './template-covers/video/anime-fight.webp',
     content: {
       'zh-tw': `{{visual_style}} 打鬥場景，{{action_intensity}}。
 {{subject}} 在 {{environment}} 施展招式。
@@ -281,7 +281,7 @@ One-shot {{camera_movement}}, {{depth_of_field}}.
     name: { 'zh-tw': '商業廣告 15s', en: 'Commercial Ad 15s' },
     tags: ['commercial', 'product'],
     platform: 'seedance',
-    imageUrl: './template-covers/feature-implementation.jpg',
+    imageUrl: './template-covers/video/commercial-15s.webp',
     content: {
       'zh-tw': `15 秒商業廣告，{{visual_style}}。
 開場 {{camera_shot}} 展示 {{subject}}。
@@ -300,7 +300,7 @@ Music {{audio_music}}, aspect {{aspect_ratio}}.`,
     name: { 'zh-tw': '風景縮時攝影', en: 'Landscape Timelapse' },
     tags: ['landscape', 'cinematic'],
     platform: 'kling',
-    imageUrl: './template-covers/technical-docs.jpg',
+    imageUrl: './template-covers/video/landscape-timelapse.webp',
     content: {
       'zh-tw': `{{environment}} 縮時攝影，{{time_of_day}} 光線變化。
 {{weather}}，{{motion_speed}} 雲層與光影流動。
@@ -319,7 +319,7 @@ Voiceover: {{dialogue_line}}, {{subtitle_style}}.
     name: { 'zh-tw': '圖生影片動態化', en: 'Image-to-Video Animation' },
     tags: ['i2v', 'seedance'],
     platform: 'seedance',
-    imageUrl: './template-covers/single-agent-design.jpg',
+    imageUrl: './template-covers/video/image-to-video.webp',
     content: {
       'zh-tw': `{{reference_image}}，將靜態圖片動態化。
 {{i2v_motion}}，保持原圖構圖與風格。
@@ -336,7 +336,7 @@ Camera {{camera_shot}}, subtle {{camera_movement}}.`,
     name: { 'zh-tw': '鏡頭運動編排', en: 'Camera Choreography' },
     tags: ['cinematic', 'seedance'],
     platform: 'seedance',
-    imageUrl: './template-covers/code-review.jpg',
+    imageUrl: './template-covers/video/camera-choreography.webp',
     content: {
       'zh-tw': `{{reference_video}}，生成 {{environment}} 概念影片。
 以 {{subject}} 為視覺中心，{{camera_movement}}。

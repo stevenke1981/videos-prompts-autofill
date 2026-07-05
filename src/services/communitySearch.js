@@ -73,6 +73,11 @@ export const getCommunityTags = () => {
 
 export const getPlatformCategories = (platform) => PLATFORM_CATEGORIES[platform] || [];
 
+export const normalizeCommunityCategory = (platform, category = 'all') => {
+  if (!platform || platform === 'all' || !category || category === 'all') return 'all';
+  return getPlatformCategories(platform).some((item) => item.id === category) ? category : 'all';
+};
+
 export const getGrokCategories = () => GROK_IMAGINE_CATEGORIES;
 export const getSeedanceCategories = () => SEEDANCE_CATEGORIES;
 export const getKlingCategories = () => KLING_CATEGORIES;

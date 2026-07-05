@@ -6,9 +6,10 @@
 
 | 層級 | 工具 | 範圍 |
 |------|------|------|
-| 單元 | Vitest | promptEngine、merge、helpers、storage、deliverables、seedData、communitySearch |
+| 單元 | Vitest | promptEngine、merge、helpers、storage、deliverables、seedData、communitySearch、discoveryFeed |
+| 靜態檢查 | ESLint | JavaScript / JSX runtime 與 React 規則 |
 | 建置 | vite build | 生產打包 |
-| E2E | Playwright | 發現頁、填空、複製、社群搜尋、深色模式 |
+| E2E | Playwright | 統一瀑布流、填空、複製、社群匯入、詞庫、深色模式 |
 | 手動 | 瀏覽器 | 各平台模板內容正確性 |
 
 ---
@@ -17,6 +18,7 @@
 
 ```bash
 npm test              # Vitest
+npm run lint          # ESLint
 npm run build         # 建置
 npm run test:e2e      # Playwright（需 install chromium）
 npm run dev           # 開發伺服器 :1420
@@ -42,8 +44,8 @@ npm run dev           # 開發伺服器 :1420
 |----|------|------|
 | SD-01 | INITIAL_TEMPLATES_CONFIG.length | ≥15 |
 | SD-02 | 每模板 extractVariableKeys | 所有 key 在 banks 或 defaults |
-| SD-03 | SYSTEM_DATA_VERSION | 字串非空 |
-| SD-04 | 每個系統模板封面 | imageUrl 為本機 JPEG 且檔案存在 |
+| SD-03 | SYSTEM_DATA_VERSION | 1.1.0，觸發舊封面遷移 |
+| SD-04 | 每個系統模板封面 | 唯一的本機 WebP 且檔案存在 |
 
 ### 3.4 communitySearch.js（新增）
 
@@ -55,7 +57,23 @@ npm run dev           # 開發伺服器 :1420
 | CS-04 | communityPromptToTemplate | 產生有效 Template 含 id/name/content |
 | CS-05 | COMMUNITY_DATA_VERSION | 非空字串 |
 
-### 3.5 其餘（helpers、merge、storage、useKeyboardShortcuts）— 沿用
+### 3.5 discoveryFeed.js（新增）
+
+| ID | 案例 | 預期 |
+|----|------|------|
+| DF-01 | 正規化內建與社群資料 | 保留來源物件，不寫入持久層 |
+| DF-02 | 社群封面映射 | 同一 item 穩定對應本機 WebP |
+| DF-03 | 搜尋與來源/平台/分類篩選 | 只回傳符合項目 |
+| DF-04 | 首頁分頁 | 首頁最多 24 筆並正確回報 hasMore |
+
+### 3.6 merge 封面遷移
+
+| ID | 案例 | 預期 |
+|----|------|------|
+| MG-07 | 使用者自訂封面 | data URL / 外部 URL 保留 |
+| MG-08 | 舊 bundled JPG | 升級為目前生成封面 |
+
+### 3.7 其餘（helpers、storage、useKeyboardShortcuts）— 沿用
 
 ---
 
@@ -63,8 +81,8 @@ npm run dev           # 開發伺服器 :1420
 
 1. 首頁標題含「Video」
 2. 發現頁 → 選 Seedance 模板 → 複製 Prompt（剪貼簿非空，含 Subject/主體）
-3. 社群 Tab → 搜尋 "cinematic" → 結果可見
-4. 詞庫搜尋過濾
+3. 原始發現頁搜尋 "cinematic" → 同一瀑布流顯示社群卡片 → 選中後進入編輯器
+4. 返回編輯器 → 詞庫搜尋過濾
 5. 設定 → 深色模式 `html.dark`
 
 ---
@@ -81,11 +99,12 @@ npm run dev           # 開發伺服器 :1420
 - [ ] 統計列顯示字元/token
 - [ ] 複製結果含主體/動作段落
 
-### 5.3 社群搜尋
-- [ ] 切換至「社群」Tab
-- [ ] 搜尋 "product" 有結果
-- [ ] 點「匯入模板」建立新模板
-- [ ] 來源連結可開啟
+### 5.3 統一瀑布流
+- [x] 首頁同時顯示內建與社群來源
+- [x] 搜尋 "cinematic" 有社群結果
+- [x] 來源、平台與分類篩選可組合
+- [x] 點社群卡片後才建立本機模板
+- [x] 「載入更多」以 24 筆為增量
 
 ### 5.4 編輯
 - [ ] 切換編輯模式
@@ -105,6 +124,20 @@ npm run dev           # 開發伺服器 :1420
 ## 6. 通過標準
 
 - `npm test` 0 failure
+- `npm run lint` 0 error / 0 warning
 - `npm run build` exit 0
 - E2E smoke 全過
-- 手動 §5.1–5.6 全勾
+- 生成封面路徑與檔案存在性測試全過
+
+---
+
+## 7. 2026-07-05 實際驗證結果
+
+| 指令 | 結果 |
+|------|------|
+| `npm test` | ✅ 9 files / 60 tests |
+| `npm run lint` | ✅ 0 error / 0 warning |
+| `npm run build` | ✅ 通過；保留單一大 chunk 警告 |
+| `npm run test:e2e` | ✅ 4/4 |
+
+非阻斷提示：`caniuse-lite` 約 7 個月未更新；production JS 為 874.18 kB（gzip 202.90 kB）。

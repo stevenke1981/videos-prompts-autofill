@@ -96,6 +96,21 @@ describe('merge', () => {
     ]);
   });
 
+  it('MG-08: mergeTemplates replaces legacy bundled covers with current generated covers', () => {
+    const systemTemplate = INITIAL_TEMPLATES_CONFIG[0];
+    const current = [
+      {
+        ...systemTemplate,
+        imageUrl: './template-covers/agent-system.jpg',
+      },
+    ];
+
+    const { templates } = mergeTemplatesWithSystem(current, { backupSuffix: ' (backup)' });
+    const merged = templates.find((template) => template.id === systemTemplate.id);
+
+    expect(merged.imageUrl).toBe(systemTemplate.imageUrl);
+  });
+
   it('MG-05: mergeBanks keeps new custom bank', () => {
     const currentBanks = {
       my_custom_bank: {

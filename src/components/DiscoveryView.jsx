@@ -1,35 +1,133 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ImageIcon,
-  LayoutGrid,
-  RotateCcw,
-  Globe,
-  Settings,
   ArrowUpDown,
+  ChevronDown,
+  Edit3,
   Github,
+  Globe,
+  ImageIcon,
+  Layers3,
+  RotateCcw,
+  Search,
+  Settings,
+  Sparkles,
   Users,
 } from 'lucide-react';
-import { getLocalized } from '../utils/helpers';
-import { CommunitySearchPanel } from './CommunitySearchPanel';
+import { COMMUNITY_PROMPTS } from '../data/communityPrompts';
+import {
+  getPlatformCategories,
+  getPlatformCategoryLabel,
+  normalizeCommunityCategory,
+} from '../services/communitySearch';
+import {
+  buildDiscoveryFeed,
+  DISCOVERY_PAGE_SIZE,
+  filterDiscoveryFeed,
+} from '../utils/discoveryFeed';
 
-/**
- * DiscoveryView 元件 - 瀑布流展示所有模板
- */
+const SOURCE_OPTIONS = [
+  { value: 'all', labelKey: 'discovery_source_all', icon: Layers3 },
+  { value: 'builtin', labelKey: 'discovery_source_builtin', icon: Sparkles },
+  { value: 'community', labelKey: 'discovery_source_community', icon: Users },
+];
+
+const SORT_OPTIONS = [
+  { value: 'newest', labelKey: 'sort_newest' },
+  { value: 'oldest', labelKey: 'sort_oldest' },
+  { value: 'a-z', labelKey: 'sort_az' },
+  { value: 'z-a', labelKey: 'sort_za' },
+  { value: 'random', labelKey: 'sort_random' },
+];
+
+const TemplateCard = ({ item, language, t, onSelect }) => {
+  const isCommunity = item.source === 'community';
+  const categoryLabel =
+    isCommunity && item.category
+      ? getPlatformCategoryLabel(item.platform, item.category, language)
+      : '';
+
+  return (
+    <button
+      type="button"
+      data-testid={isCommunity ? 'community-template-card' : 'builtin-template-card'}
+      onClick={() => onSelect(item)}
+      className="group mb-5 block w-full break-inside-avoid overflow-hidden rounded-3xl border border-white/80 bg-white/90 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300/50 dark:border-slate-700 dark:bg-slate-900/90"
+    >
+      <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-orange-950">
+        {item.imageUrl ? (
+          <img
+            src={item.imageUrl}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            onError={(event) => {
+              event.currentTarget.hidden = true;
+            }}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-white/50">
+            <ImageIcon className="h-12 w-12" aria-hidden="true" />
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/5 to-transparent" />
+
+        <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+          <span
+            className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider backdrop-blur-md ${
+              isCommunity
+                ? 'border-violet-300/50 bg-violet-500/80 text-white'
+                : 'border-orange-300/50 bg-orange-500/85 text-white'
+            }`}
+          >
+            {t(isCommunity ? 'discovery_community_badge' : 'discovery_builtin_badge')}
+          </span>
+          <span className="rounded-full border border-white/25 bg-black/35 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
+            {item.platform}
+          </span>
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+          <h3 className="text-lg font-black leading-snug drop-shadow-lg">{item.title}</h3>
+          {categoryLabel && (
+            <p className="mt-1 text-[11px] font-bold text-orange-200">{categoryLabel}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-3 p-4">
+        <p className="line-clamp-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+          {item.excerpt}
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {item.tags.slice(0, 4).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-300"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+        <span className="flex w-full items-center justify-center rounded-xl bg-slate-950 px-3 py-2 text-xs font-bold text-white transition-colors group-hover:bg-orange-500 dark:bg-orange-500 dark:group-hover:bg-orange-400">
+          {t(isCommunity ? 'use_community_template' : 'use_builtin_template')}
+        </span>
+      </div>
+    </button>
+  );
+};
+
 export const DiscoveryView = React.memo(
   ({
     filteredTemplates,
     setActiveTemplateId,
     setDiscoveryView,
-    setZoomedImage,
     posterScrollRef,
     setIsPosterAutoScrollPaused,
     currentMasonryStyle,
     AnimatedSlogan,
     isSloganActive = true,
     t,
-    TAG_STYLES,
-    displayTag,
-    // Tools props
     handleRefreshSystemData,
     language,
     setLanguage,
@@ -39,400 +137,277 @@ export const DiscoveryView = React.memo(
     sortOrder,
     setSortOrder,
     setRandomSeed,
-    selectedTags = '',
-    setSelectedTags,
-    TEMPLATE_TAGS = [],
-    templates = [],
     onImportCommunityTemplate,
-    addToast,
   }) => {
-    const [discoveryTab, setDiscoveryTab] = useState('templates');
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const [query, setQuery] = useState('');
+    const [source, setSource] = useState('all');
+    const [platform, setPlatform] = useState('all');
+    const [category, setCategory] = useState('all');
+    const [visibleCount, setVisibleCount] = useState(DISCOVERY_PAGE_SIZE);
 
-    const discoveryTabs = (
-      <div className="flex gap-2 px-1">
-        <button
-          type="button"
-          onClick={() => setDiscoveryTab('templates')}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all border ${
-            discoveryTab === 'templates'
-              ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20'
-              : 'bg-white text-gray-500 border-gray-200 hover:border-orange-200 hover:text-orange-500'
-          }`}
-        >
-          <LayoutGrid className="w-3.5 h-3.5" />
-          {t('discovery_tab_templates')}
-        </button>
-        <button
-          type="button"
-          onClick={() => setDiscoveryTab('community')}
-          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold transition-all border ${
-            discoveryTab === 'community'
-              ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20'
-              : 'bg-white text-gray-500 border-gray-200 hover:border-orange-200 hover:text-orange-500'
-          }`}
-        >
-          <Users className="w-3.5 h-3.5" />
-          {t('discovery_tab_community')}
-        </button>
-      </div>
+    const feed = useMemo(
+      () =>
+        buildDiscoveryFeed({
+          templates: filteredTemplates,
+          community: COMMUNITY_PROMPTS,
+          language,
+        }),
+      [filteredTemplates, language]
     );
 
-    const availableTags = TEMPLATE_TAGS.filter((tag) =>
-      templates.some((tpl) => tpl.tags?.includes(tag))
+    const platforms = useMemo(
+      () => ['all', ...new Set(feed.map((item) => item.platform).filter(Boolean))],
+      [feed]
+    );
+    const categories = useMemo(() => getPlatformCategories(platform), [platform]);
+
+    const result = useMemo(
+      () =>
+        filterDiscoveryFeed(feed, {
+          query,
+          source,
+          platform,
+          category,
+          visibleCount,
+        }),
+      [feed, query, source, platform, category, visibleCount]
     );
 
-    const tagFilterRow =
-      availableTags.length > 0 && setSelectedTags ? (
-        <div className="flex flex-wrap items-center gap-2 px-1">
-          <button
-            type="button"
-            onClick={() => setSelectedTags('')}
-            className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${
-              selectedTags === ''
-                ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20'
-                : 'bg-white text-gray-500 border-gray-200 hover:border-orange-200 hover:text-orange-500'
-            }`}
-          >
-            {t('all_templates')}
-          </button>
-          {availableTags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => setSelectedTags(selectedTags === tag ? '' : tag)}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold transition-all border ${
-                selectedTags === tag
-                  ? 'bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/20'
-                  : 'bg-white text-gray-500 border-gray-200 hover:border-orange-200 hover:text-orange-500'
-              }`}
-            >
-              {displayTag(tag)}
-            </button>
-          ))}
-        </div>
-      ) : null;
+    useEffect(() => {
+      setVisibleCount(DISCOVERY_PAGE_SIZE);
+    }, [query, source, platform, category, language]);
 
-    if (isMobile) {
-      return (
-        <div className="fixed inset-0 z-10 flex flex-col overflow-y-auto pb-32 md:pb-20 mesh-gradient-bg">
-          <div className="flex flex-col w-full min-h-full px-5 py-8 gap-6">
-            {/* 1. 頂部 SVG 標題區域 */}
-            <div className="w-full flex justify-center px-4">
+    const handlePlatformChange = (nextPlatform) => {
+      setPlatform(nextPlatform);
+      setCategory((current) => normalizeCommunityCategory(nextPlatform, current));
+    };
+
+    const handleSelect = (item) => {
+      if (item.source === 'community') {
+        onImportCommunityTemplate(item.communityItem);
+        return;
+      }
+
+      setActiveTemplateId(item.template.id);
+      setDiscoveryView(false);
+    };
+
+    const handleSort = (value) => {
+      setSortOrder(value);
+      if (value === 'random') setRandomSeed(Date.now());
+      setIsSortMenuOpen(false);
+    };
+
+    return (
+      <div className="fixed inset-0 z-10 overflow-y-auto mesh-gradient-bg">
+        <div
+          ref={posterScrollRef}
+          data-testid="unified-discovery"
+          className="mx-auto flex min-h-full w-full max-w-[1720px] flex-col gap-7 px-5 pb-32 pt-7 md:px-10 md:pb-16"
+          onMouseEnter={() => setIsPosterAutoScrollPaused?.(true)}
+          onMouseLeave={() => setIsPosterAutoScrollPaused?.(false)}
+        >
+          <header className="grid gap-5 rounded-[2rem] border border-white/60 bg-white/55 p-5 shadow-sm backdrop-blur-2xl dark:border-slate-700/60 dark:bg-slate-900/60 md:grid-cols-[minmax(220px,340px)_1fr_auto] md:items-center md:p-7">
+            <div className="flex items-center justify-center md:justify-start">
               <img
                 src="./Title.svg"
-                alt="Prompt Fill Logo"
-                className="w-full max-w-[280px] h-auto"
+                alt={t('app_title')}
+                className="h-auto w-full max-w-[310px]"
               />
             </div>
 
-            {/* 2. 動態文字區 */}
-            <div className="w-full">
+            <div className="min-w-0">
               <AnimatedSlogan isActive={isSloganActive} language={language} />
             </div>
 
-            {/* 3. 功能按鈕區域 */}
-            <div className="flex items-center justify-center gap-4 py-2">
+            <div className="flex flex-wrap items-center justify-center gap-2 md:justify-end">
               <button
-                onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
-                className="flex flex-col items-center gap-1.5 group"
+                type="button"
+                onClick={() => setDiscoveryView(false)}
+                className="flex items-center gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-orange-500 dark:bg-orange-500 dark:hover:bg-orange-400"
+                title={t('back_to_editor')}
               >
-                <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 group-hover:bg-orange-50 transition-all">
-                  <ArrowUpDown size={20} className="text-gray-600 group-hover:text-orange-600" />
-                </div>
-                <span className="text-[10px] font-bold text-gray-500">{t('sort')}</span>
-
-                {isSortMenuOpen && (
-                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 py-2 min-w-[140px] z-[110] animate-in slide-in-from-top-2 duration-200">
-                    {[
-                      { value: 'newest', label: t('sort_newest') },
-                      { value: 'oldest', label: t('sort_oldest') },
-                      { value: 'a-z', label: t('sort_az') },
-                      { value: 'z-a', label: t('sort_za') },
-                      { value: 'random', label: t('sort_random') },
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSortOrder(option.value);
-                          if (option.value === 'random') setRandomSeed(Date.now());
-                          setIsSortMenuOpen(false);
-                        }}
-                        className={`w-full text-center px-4 py-2.5 text-xs hover:bg-orange-50 transition-colors ${sortOrder === option.value ? 'text-orange-600 font-bold' : 'text-gray-700'}`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <Edit3 className="h-4 w-4" />
+                <span className="hidden xl:inline">{t('back_to_editor')}</span>
               </button>
-
               <button
+                type="button"
                 onClick={() => setLanguage(language === 'zh-tw' ? 'en' : 'zh-tw')}
-                className="flex flex-col items-center gap-1.5 group"
+                className="rounded-xl border border-white/70 bg-white/70 p-2.5 text-slate-600 shadow-sm transition-colors hover:text-orange-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                title={language === 'zh-tw' ? 'English' : '繁體中文'}
               >
-                <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 group-hover:bg-orange-50 transition-all">
-                  <Globe size={20} className="text-gray-600 group-hover:text-orange-600" />
-                </div>
-                <span className="text-[10px] font-bold text-gray-500">{t('language_name')}</span>
+                <Globe className="h-5 w-5" />
               </button>
-
               <button
+                type="button"
                 onClick={() => setIsSettingsOpen(true)}
-                className="flex flex-col items-center gap-1.5 group"
+                className="rounded-xl border border-white/70 bg-white/70 p-2.5 text-slate-600 shadow-sm transition-colors hover:text-orange-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                title={t('settings')}
               >
-                <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 group-hover:bg-orange-50 transition-all">
-                  <Settings size={20} className="text-gray-600 group-hover:text-orange-600" />
-                </div>
-                <span className="text-[10px] font-bold text-gray-500">{t('settings')}</span>
+                <Settings className="h-5 w-5" />
               </button>
-
+              <button
+                type="button"
+                onClick={handleRefreshSystemData}
+                className="rounded-xl border border-white/70 bg-white/70 p-2.5 text-slate-600 shadow-sm transition-colors hover:text-orange-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                title={t('refresh_desc')}
+              >
+                <RotateCcw className="h-5 w-5" />
+              </button>
               <a
                 href="https://github.com/stevenke1981/videos-prompts-autofill"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center gap-1.5 group"
+                className="rounded-xl border border-white/70 bg-white/70 p-2.5 text-slate-600 shadow-sm transition-colors hover:text-slate-950 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 title={t('github_link')}
               >
-                <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 group-hover:bg-orange-50 transition-all">
-                  <Github size={20} className="text-gray-600 group-hover:text-gray-900" />
-                </div>
-                <span className="text-[10px] font-bold text-gray-500">GitHub</span>
+                <Github className="h-5 w-5" />
               </a>
-
-              <button
-                onClick={handleRefreshSystemData}
-                className="flex flex-col items-center gap-1.5 group"
-              >
-                <div className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 group-hover:bg-orange-50 transition-all">
-                  <RotateCcw size={20} className="text-gray-600 group-hover:text-orange-600" />
-                </div>
-                <span className="text-[10px] font-bold text-gray-500">{t('sync')}</span>
-              </button>
             </div>
+          </header>
 
-            {/* 4. 發現頁 Tab */}
-            {discoveryTabs}
+          <section className="sticky top-3 z-30 space-y-4 rounded-[2rem] border border-white/70 bg-white/80 p-4 shadow-lg backdrop-blur-2xl dark:border-slate-700 dark:bg-slate-900/85 md:p-5">
+            <div className="grid gap-3 lg:grid-cols-[minmax(280px,1fr)_auto_auto]">
+              <label className="relative block">
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={t('discovery_search_all')}
+                  className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:ring-orange-950"
+                />
+              </label>
 
-            {discoveryTab === 'community' ? (
-              <CommunitySearchPanel
-                language={language}
-                t={t}
-                addToast={addToast}
-                onImportTemplate={onImportCommunityTemplate}
-              />
-            ) : (
-              <>
-            {/* 5. 標籤篩選 */}
-            {tagFilterRow}
-
-            {/* 6. 圖像展示（單列） */}
-            <div className="flex flex-col gap-6 mt-2">
-              {filteredTemplates.map((t_item) => (
-                <div
-                  key={t_item.id}
-                  onClick={() => {
-                    setZoomedImage(t_item.imageUrl);
-                  }}
-                  className="w-full bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 active:scale-[0.98] transition-all"
-                >
-                  <div className="relative w-full bg-gray-50">
-                    {t_item.imageUrl ? (
-                      <img
-                        src={t_item.imageUrl}
-                        alt={getLocalized(t_item.name, language)}
-                        className="w-full h-auto block"
-                        referrerPolicy="no-referrer"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full aspect-[4/3] flex items-center justify-center text-gray-300">
-                        <ImageIcon size={48} strokeWidth={1} />
-                      </div>
-                    )}
-                    {/* Title Overlay */}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-5 pt-10">
-                      <h3 className="text-white font-bold text-lg">
-                        {getLocalized(t_item.name, language)}
-                      </h3>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-              </>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden mesh-gradient-bg">
-        {/* Poster Content Container */}
-        <div className="flex flex-col w-full h-full bg-white/20 border-2 border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.05)] overflow-hidden relative z-10 p-4 md:p-6 lg:p-9 rounded-[2rem]">
-          <div className="flex-1 flex flex-col lg:flex-row gap-8 lg:gap-20 overflow-hidden py-6 lg:py-10 px-4 lg:px-8">
-            {/* Left Side: Logo & Slogan */}
-            <div className="flex flex-col justify-center items-center lg:items-start lg:w-[380px] xl:w-[460px] flex-shrink-0 px-4 lg:pl-8 lg:pr-6 gap-8">
-              <div className="w-full max-w-[400px] scale-75 sm:scale-90 lg:scale-100 origin-center lg:origin-left">
-                <img src="./Title.svg" alt="Prompt Fill Logo" className="w-full h-auto" />
+              <div className="flex flex-wrap gap-2" aria-label={t('discovery_source_all')}>
+                {SOURCE_OPTIONS.map(({ value, labelKey, icon: Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setSource(value)}
+                    className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition ${
+                      source === value
+                        ? 'border-orange-500 bg-orange-500 text-white shadow-md shadow-orange-500/20'
+                        : 'border-slate-200 bg-white text-slate-600 hover:border-orange-200 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300'
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {t(labelKey)}
+                  </button>
+                ))}
               </div>
-              <AnimatedSlogan isActive={isSloganActive} language={language} />
-            </div>
 
-            {/* Right Side: Templates or Community */}
-            <div
-              ref={discoveryTab === 'templates' ? posterScrollRef : undefined}
-              className="flex-1 overflow-y-auto overflow-x-visible pr-4 lg:pr-8 scroll-smooth poster-scrollbar will-change-scroll"
-              onMouseEnter={() => discoveryTab === 'templates' && setIsPosterAutoScrollPaused(true)}
-              onMouseLeave={() => discoveryTab === 'templates' && setIsPosterAutoScrollPaused(false)}
-            >
-              <div className="h-full w-full py-8 lg:py-12 px-6 lg:px-12">
-                <div className="mb-4">{discoveryTabs}</div>
-                {discoveryTab === 'community' ? (
-                  <CommunitySearchPanel
-                    language={language}
-                    t={t}
-                    addToast={addToast}
-                    onImportTemplate={onImportCommunityTemplate}
-                  />
-                ) : (
-                  <>
-                {tagFilterRow && <div className="mb-4">{tagFilterRow}</div>}
-                <div className={currentMasonryStyle.container}>
-                  {filteredTemplates.map((t_item) => (
-                    <div
-                      key={t_item.id}
-                      onClick={() => {
-                        setZoomedImage(t_item.imageUrl);
-                      }}
-                      className="break-inside-avoid cursor-pointer group mb-5 transition-shadow duration-300 relative overflow-hidden rounded-2xl isolate border-2 border-white hover:shadow-[0_0_25px_rgba(251,146,60,0.6)] will-change-transform"
-                    >
-                      <div className="relative w-full overflow-hidden rounded-xl bg-gray-100">
-                        {t_item.imageUrl ? (
-                          <img
-                            src={t_item.imageUrl}
-                            alt={getLocalized(t_item.name, language)}
-                            className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-                            referrerPolicy="no-referrer"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full aspect-[3/4] bg-gray-100 flex items-center justify-center text-gray-300">
-                            <ImageIcon size={32} />
-                          </div>
-                        )}
-
-                        {/* Hover Overlay: Bottom Glass Mask */}
-                        <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-[opacity,transform] duration-500 ease-out z-20">
-                          <div className="backdrop-blur-md bg-white/40 border-t border-white/40 py-4 px-6 shadow-2xl">
-                            <p className="font-bold text-base leading-snug text-center text-gray-800">
-                              {getLocalized(t_item.name, language)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Bar: Tools & Author Info */}
-          <div className="mt-auto flex items-center justify-between px-8 py-6 relative z-20">
-            {/* Left: Tools */}
-            <div className="flex items-center gap-3 p-2">
-              {/* 切換發現頁（返回編輯器） */}
-              <button
-                onClick={() => setDiscoveryView(false)}
-                className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-orange-600 hover:bg-white/50 shadow-sm"
-                title="返回編輯器"
-              >
-                <LayoutGrid size={20} />
-              </button>
-
-              <div className="w-px h-6 bg-white/30" />
-
-              {/* Sort Menu Button */}
               <div className="relative">
                 <button
+                  type="button"
                   onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
-                  className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-orange-600 hover:bg-white/50 shadow-sm"
-                  title={t('sort')}
+                  className="flex h-full min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 hover:border-orange-200 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
                 >
-                  <ArrowUpDown size={20} />
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                  {t(SORT_OPTIONS.find((item) => item.value === sortOrder)?.labelKey || 'sort_newest')}
+                  <ChevronDown className="h-3.5 w-3.5" />
                 </button>
                 {isSortMenuOpen && (
-                  <div className="absolute bottom-full mb-3 left-0 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 py-2 min-w-[160px] z-[100] animate-in slide-in-from-bottom-2 duration-200">
-                    {[
-                      { value: 'newest', label: t('sort_newest') },
-                      { value: 'oldest', label: t('sort_oldest') },
-                      { value: 'a-z', label: t('sort_az') },
-                      { value: 'z-a', label: t('sort_za') },
-                      { value: 'random', label: t('sort_random') },
-                    ].map((option) => (
+                  <div className="absolute right-0 top-full z-50 mt-2 min-w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-950">
+                    {SORT_OPTIONS.map((option) => (
                       <button
                         key={option.value}
-                        onClick={() => {
-                          setSortOrder(option.value);
-                          if (option.value === 'random') setRandomSeed(Date.now());
-                          setIsSortMenuOpen(false);
-                        }}
-                        className={`w-full text-left px-5 py-2.5 text-sm hover:bg-orange-50 transition-colors ${sortOrder === option.value ? 'text-orange-600 font-semibold' : 'text-gray-700'}`}
+                        type="button"
+                        onClick={() => handleSort(option.value)}
+                        className="block w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-slate-600 hover:bg-orange-50 hover:text-orange-600 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
-                        {option.label}
+                        {t(option.labelKey)}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
+            </div>
 
-              <button
-                onClick={() => setLanguage(language === 'zh-tw' ? 'en' : 'zh-tw')}
-                className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-orange-600 hover:bg-white/50 shadow-sm flex items-center gap-1.5"
-                title={t('language')}
-              >
-                <Globe size={20} />
-                <span className="text-xs font-bold">{t('language_name')}</span>
-              </button>
-
-              <button
-                onClick={() => setIsSettingsOpen(true)}
-                className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-orange-600 hover:bg-white/50 shadow-sm"
-                title={t('settings')}
-              >
-                <Settings size={20} />
-              </button>
-
-              <button
-                onClick={handleRefreshSystemData}
-                className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-orange-600 hover:bg-white/50 shadow-sm"
-                title={t('refresh_desc')}
-              >
-                <RotateCcw size={20} />
-              </button>
-
-              <a
-                  href="https://github.com/stevenke1981/videos-prompts-autofill"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2.5 rounded-xl transition-all text-gray-500 hover:text-gray-900 hover:bg-white/50 shadow-sm flex items-center gap-2"
-                  title={t('github_link')}
+            <div className="flex flex-wrap items-center gap-2">
+              {platforms.map((itemPlatform) => (
+                <button
+                  key={itemPlatform}
+                  type="button"
+                  onClick={() => handlePlatformChange(itemPlatform)}
+                  className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition ${
+                    platform === itemPlatform
+                      ? 'border-slate-900 bg-slate-900 text-white dark:border-orange-400 dark:bg-orange-500'
+                      : 'border-slate-200 bg-white/70 text-slate-500 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300'
+                  }`}
                 >
-                  <Github size={20} />
-                </a>
+                  {itemPlatform === 'all' ? t('discovery_platform_all') : itemPlatform}
+                </button>
+              ))}
             </div>
 
-            {/* Right: GitHub Link */}
-            <div className="flex flex-col items-end gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
-              <div className="flex items-center gap-3 text-[11px] font-medium text-gray-700 px-4 py-2">
+            {categories.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setCategory('all')}
+                  className={`rounded-full border px-3 py-1 text-[10px] font-bold ${
+                    category === 'all'
+                      ? 'border-violet-500 bg-violet-500 text-white'
+                      : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300'
+                  }`}
+                >
+                  {t('all_templates')}
+                </button>
+                {categories.map((itemCategory) => (
+                  <button
+                    key={itemCategory.id}
+                    type="button"
+                    onClick={() => setCategory(itemCategory.id)}
+                    className={`rounded-full border px-3 py-1 text-[10px] font-bold ${
+                      category === itemCategory.id
+                        ? 'border-violet-500 bg-violet-500 text-white'
+                        : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300'
+                    }`}
+                  >
+                    {getPlatformCategoryLabel(platform, itemCategory.id, language)}
+                  </button>
+                ))}
               </div>
+            )}
+
+            <p className="px-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+              {result.all.length} {t('discovery_results')}
+            </p>
+          </section>
+
+          {result.visible.length > 0 ? (
+            <main
+              data-testid="unified-discovery-grid"
+              className={currentMasonryStyle?.container || 'columns-1 gap-5 sm:columns-2 lg:columns-3'}
+            >
+              {result.visible.map((item) => (
+                <TemplateCard
+                  key={item.key}
+                  item={item}
+                  language={language}
+                  t={t}
+                  onSelect={handleSelect}
+                />
+              ))}
+            </main>
+          ) : (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-white/50 px-6 py-16 text-center text-sm font-bold text-slate-500 dark:border-slate-700 dark:bg-slate-900/50">
+              {t('no_discovery_results')}
             </div>
-          </div>
+          )}
+
+          {result.hasMore && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => setVisibleCount((count) => count + DISCOVERY_PAGE_SIZE)}
+                className="rounded-2xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-orange-500 dark:bg-orange-500"
+              >
+                {t('load_more')}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -440,4 +415,3 @@ export const DiscoveryView = React.memo(
 );
 
 DiscoveryView.displayName = 'DiscoveryView';
-

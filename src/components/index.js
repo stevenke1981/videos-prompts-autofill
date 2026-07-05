@@ -10,7 +10,6 @@ export { TemplatePreview } from './TemplatePreview';
 export { TemplatesSidebar } from './TemplatesSidebar';
 export { BanksSidebar, CategoryManager, InsertVariableModal, AddBankModal } from './BanksSidebar';
 export { DiscoveryView } from './DiscoveryView';
-export { CommunitySearchPanel } from './CommunitySearchPanel';
 export { MobileSettingsView } from './MobileSettingsView';
 export { ImagePreviewModal } from './ImagePreviewModal';
 export { AnimatedSlogan, MobileAnimatedSlogan } from './AnimatedSlogan';

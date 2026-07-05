@@ -3,6 +3,9 @@ import { INITIAL_TEMPLATES_CONFIG, SYSTEM_DATA_VERSION } from '../data/templates
 import { INITIAL_BANKS, INITIAL_DEFAULTS } from '../data/banks';
 import { deepClone, makeUniqueKey } from './helpers';
 
+const isLegacyBundledCover = (imageUrl) =>
+  typeof imageUrl === 'string' && /^\.\/template-covers\/[^/]+\.jpg$/i.test(imageUrl);
+
 /** 是否需要與系統種子資料同步（版本變更或缺少系統模板） */
 export const needsSystemDataSync = (currentTemplates, lastVersion) => {
   if (lastVersion !== SYSTEM_DATA_VERSION) return true;
@@ -36,12 +39,16 @@ export const mergeTemplatesWithSystem = (currentTemplates, { backupSuffix }) => 
       }
 
       // 系統更新可補上預設封面，但不可覆蓋使用者替換或新增的圖片。
-      if (targetInMerged && t.imageUrl) {
+      if (targetInMerged && t.imageUrl && !isLegacyBundledCover(t.imageUrl)) {
         targetInMerged.imageUrl = t.imageUrl;
       }
       if (targetInMerged && Array.isArray(t.imageUrls) && t.imageUrls.length > 0) {
-        targetInMerged.imageUrls = deepClone(t.imageUrls);
-        targetInMerged.imageUrl = t.imageUrl || t.imageUrls[0];
+        const customImageUrls = t.imageUrls.filter((imageUrl) => !isLegacyBundledCover(imageUrl));
+        if (customImageUrls.length > 0) {
+          targetInMerged.imageUrls = deepClone(customImageUrls);
+          targetInMerged.imageUrl =
+            t.imageUrl && !isLegacyBundledCover(t.imageUrl) ? t.imageUrl : customImageUrls[0];
+        }
       }
 
       if (isDifferent) {

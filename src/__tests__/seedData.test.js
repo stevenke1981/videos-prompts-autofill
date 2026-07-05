@@ -11,18 +11,23 @@ describe('video seed data', () => {
     expect(INITIAL_TEMPLATES_CONFIG.length).toBeGreaterThanOrEqual(15);
   });
 
-  it('has system data version', () => {
-    expect(SYSTEM_DATA_VERSION).toBeTruthy();
+  it('bumps the system data version for generated cover migration', () => {
+    expect(SYSTEM_DATA_VERSION).toBe('1.1.0');
   });
 
   it('all system templates have a bundled cover image', () => {
+    const imageUrls = new Set();
+
     INITIAL_TEMPLATES_CONFIG.forEach((template) => {
       expect(template.imageUrl, `Missing cover for ${template.id}`).toMatch(
-        /^\.\/template-covers\/.+\.jpg$/
+        /^\.\/template-covers\/video\/.+\.webp$/
       );
+      imageUrls.add(template.imageUrl);
       const coverPath = resolve(process.cwd(), 'public', template.imageUrl.slice(2));
       expect(existsSync(coverPath), `Cover file not found for ${template.id}`).toBe(true);
     });
+
+    expect(imageUrls.size).toBe(INITIAL_TEMPLATES_CONFIG.length);
   });
 
   it('has at least 40 banks', () => {

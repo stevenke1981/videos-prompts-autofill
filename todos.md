@@ -38,8 +38,8 @@
 
 | ID | 任務 | 狀態 | 驗收 |
 |----|------|------|------|
-| P2-1 | CommunitySearchPanel 元件 | ✅ | 搜尋/篩選/複製 |
-| P2-2 | 發現頁 Tab 整合 | ✅ | 模板/社群切換 |
+| P2-1 | CommunitySearchPanel 元件（歷史實作） | ✅ | 已於 P4 由統一瀑布流取代 |
+| P2-2 | 發現頁 Tab 整合（歷史實作） | ✅ | 已於 P4 移除獨立 Tab |
 | P2-3 | 匯入社群提示詞為模板 | ✅ | 一鍵建立 |
 | P2-4 | npm run dev smoke | ✅ | 發現頁載入 |
 
@@ -51,11 +51,29 @@
 |----|------|------|------|
 | P3-1 | seedData.test.js 更新 | ✅ | 影片種子驗證 |
 | P3-2 | communitySearch.test.js | ✅ | 搜尋單元測試 |
-| P3-3 | npm test | ✅ | 43/43 |
+| P3-3 | npm test | ✅ | 60/60 |
 | P3-4 | npm run build | ✅ | 零錯誤 |
 | P3-5 | npm run test:e2e | ✅ | 4/4 |
 | P3-6 | 更新 final.md | ✅ | |
 | P3-7 | README.md | ✅ | |
+| P3-8 | npm run lint | ✅ | 0 error / 0 warning |
+
+---
+
+## Phase 4 — CBM 檢視、統一瀑布流與生成封面
+
+| ID | 任務 | 狀態 | 驗收 |
+|----|------|------|------|
+| P4-1 | CBM 全量索引與呼叫路徑檢視 | ✅ | 222 files / 298 symbols / 1123 edges |
+| P4-2 | 建立 unified discovery feed model | ✅ | 內建 + 社群 presentation model |
+| P4-3 | 社群模板整合原始瀑布流 | ✅ | 無獨立社群 Tab |
+| P4-4 | 搜尋、來源、平台、分類與分頁 | ✅ | 首頁 24 筆 + 載入更多 |
+| P4-5 | 社群模板按需匯入 | ✅ | 選中後才寫入 templates |
+| P4-6 | 修復跨平台 category 殘留 | ✅ | regression test |
+| P4-7 | 恢復 ESLint 與修復 runtime/security 錯誤 | ✅ | lint 零錯誤 |
+| P4-8 | Codex 內建生圖產生 15 張封面 | ✅ | 一模板一封面、無文字／品牌 |
+| P4-9 | WebP 最佳化與舊封面遷移 | ✅ | 15 張共約 1.60 MiB |
+| P4-10 | CBM 報告、測試與文件更新 | ✅ | `docs/cbm-review-2026-07-05.md` |
 
 ---
 
@@ -66,7 +84,8 @@
 | Phase 0 | 5 | 5 | 100% |
 | Phase 1 | 11 | 11 | 100% |
 | Phase 2 | 4 | 4 | 100% |
-| Phase 3 | 7 | 7 | 100% |
-| **合計** | **27** | **27** | **100%** |
+| Phase 3 | 8 | 8 | 100% |
+| Phase 4 | 10 | 10 | 100% |
+| **合計** | **38** | **38** | **100%** |
 
 *最後更新：2026-07-05*
