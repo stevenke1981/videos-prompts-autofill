@@ -1,0 +1,6 @@
+{
+  "appVersion": "1.0.0",
+  "systemDataVersion": "1.0.0",
+  "communityDataVersion": "1.3.0",
+  "basedOn": "agent-prompt-fill / prompt-autofill"
+}

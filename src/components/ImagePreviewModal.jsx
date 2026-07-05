@@ -1,0 +1,461 @@
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { X, ChevronLeft, ChevronRight, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { getLocalized } from '../utils/helpers';
+import { PremiumButton } from './PremiumButton';
+
+export const ImagePreviewModal = React.memo(
+  ({
+    zoomedImage,
+    template,
+    language,
+    t,
+    TAG_STYLES,
+    displayTag,
+    setActiveTemplateId,
+    setDiscoveryView,
+    setZoomedImage,
+    setMobileTab,
+  }) => {
+    const [modalMousePos, setModalMousePos] = useState({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    });
+    const [isTextExpanded, setIsTextExpanded] = useState(false);
+    const touchStartY = useRef(0);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+    // 陀螺儀支援
+    useEffect(() => {
+      if (!isMobile) return;
+
+      const handleOrientation = (e) => {
+        // 卡片展開時，暫停陀螺儀 3D 效果更新，優先確保文字捲動
+        if (isTextExpanded) return;
+
+        const { beta, gamma } = e;
+        if (beta !== null && gamma !== null) {
+          // 映射到類似滑鼠座標的值
+          const x = window.innerWidth / 2 + (gamma / 20) * (window.innerWidth / 2);
+          const y = window.innerHeight / 2 + (beta / 20) * (window.innerHeight / 2);
+          setModalMousePos({ x, y });
+        }
+      };
+
+      window.addEventListener('deviceorientation', handleOrientation);
+      return () => window.removeEventListener('deviceorientation', handleOrientation);
+    }, [isMobile, isTextExpanded]);
+
+    // 取得所有圖片清單
+    const allImages = useMemo(() => {
+      if (
+        template?.imageUrls &&
+        Array.isArray(template.imageUrls) &&
+        template.imageUrls.length > 0
+      ) {
+        return template.imageUrls;
+      }
+      return template?.imageUrl ? [template.imageUrl] : [zoomedImage];
+    }, [template, zoomedImage]);
+
+    const [currentIndex, setCurrentIndex] = useState(() => {
+      const idx = allImages.indexOf(zoomedImage);
+      return idx >= 0 ? idx : 0;
+    });
+
+    const currentImageUrl = allImages[currentIndex];
+
+    // 鎖定／解鎖背景捲動
+    useEffect(() => {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }, []);
+
+    // 計算 3D 旋轉角度
+    const rotateY = ((modalMousePos.x - window.innerWidth / 2) / (window.innerWidth / 2)) * 15;
+    const rotateX = ((modalMousePos.y - window.innerHeight / 2) / (window.innerHeight / 2)) * -15;
+
+    const handlePrev = (e) => {
+      e.stopPropagation();
+      setCurrentIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+    };
+
+    const handleNext = (e) => {
+      e.stopPropagation();
+      setCurrentIndex((prev) => (prev + 1) % allImages.length);
+    };
+
+    // 行動端手勢處理
+    const handleCardTouchStart = (e) => {
+      // 若觸摸起始於內容區域，不記錄起點
+      if (e.target.closest('.content-scroll-area')) {
+        return;
+      }
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e) => {
+      // 卡片展開時，內容區的滑動只用於文字捲動，不更新 3D 效果
+      if (isTextExpanded && e.target.closest('.content-scroll-area')) {
+        return;
+      }
+
+      // 即時更新 3D 效果
+      const touch = e.touches[0];
+      setModalMousePos({ x: touch.clientX, y: touch.clientY });
+    };
+
+    const handleCardTouchEnd = (e) => {
+      // 若觸摸結束於內容區域，不處理展開／收起
+      if (e.target.closest('.content-scroll-area') || touchStartY.current === 0) {
+        touchStartY.current = 0;
+        return;
+      }
+
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaY = touchStartY.current - touchEndY;
+
+      // 向上滑動超過 50px 則展開
+      if (deltaY > 50 && !isTextExpanded) {
+        setIsTextExpanded(true);
+      }
+      // 向下滑動超過 50px 則收起
+      else if (deltaY < -50 && isTextExpanded) {
+        setIsTextExpanded(false);
+      }
+
+      touchStartY.current = 0;
+    };
+
+    if (isMobile) {
+      return (
+        <div
+          className="fixed inset-0 z-[200] flex flex-col animate-in fade-in duration-500 overflow-hidden"
+          onClick={() => setZoomedImage(null)}
+        >
+          {/* Background Layer - Light Version */}
+          <div
+            className="absolute inset-0 z-[-1] bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: 'url(/background1.png)' }}
+          >
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-2xl"></div>
+          </div>
+
+          <button
+            className="absolute top-6 right-6 text-gray-400 hover:text-gray-900 transition-colors p-2 rounded-full hover:bg-black/5 z-[150]"
+            onClick={() => setZoomedImage(null)}
+          >
+            <X size={24} />
+          </button>
+
+          <div
+            className="flex-1 flex flex-col relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Image Section */}
+            <div
+              className={`transition-all duration-500 ease-in-out flex flex-col justify-center items-center perspective-[1000px] relative px-6 flex-shrink-0 ${isTextExpanded ? 'h-[30vh] pt-10' : 'h-[60vh]'}`}
+              style={{ perspective: '1200px' }}
+              onTouchMove={handleTouchMove}
+            >
+              <div
+                className="relative transition-transform duration-200 ease-out flex items-center justify-center w-full h-full"
+                style={{
+                  transform: isTextExpanded
+                    ? 'none'
+                    : `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+                  transformStyle: 'preserve-3d',
+                }}
+              >
+                {/* Image Shadow */}
+                <div
+                  className="absolute inset-6 bg-orange-500/10 blur-3xl rounded-3xl -z-10 transition-opacity duration-500"
+                  style={{ transform: 'translateZ(-50px)' }}
+                />
+                <img
+                  key={currentImageUrl}
+                  src={currentImageUrl}
+                  alt="Zoomed Preview"
+                  className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/50 animate-in fade-in duration-300"
+                  style={{ transform: isTextExpanded ? 'none' : 'translateZ(20px)' }}
+                />
+              </div>
+
+              {/* Mobile Navigation */}
+              {allImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 z-30">
+                  <button
+                    onClick={handlePrev}
+                    className="p-1.5 rounded-full bg-white/50 text-gray-400 border border-white shadow-sm"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <div className="flex gap-1.5">
+                    {allImages.map((_, idx) => (
+                      <div
+                        key={idx}
+                        className={`w-1 h-1 rounded-full transition-all ${idx === currentIndex ? 'bg-orange-500 w-3' : 'bg-gray-300'}`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleNext}
+                    className="p-1.5 rounded-full bg-white/50 text-gray-400 border border-white shadow-sm"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Card Section - Light Glassmorphism */}
+            <div
+              className={`
+                  flex-1 bg-white/70 backdrop-blur-2xl border-t border-white/60
+                  transition-all duration-500 ease-in-out flex flex-col overflow-hidden shadow-[0_-10px_40px_rgba(0,0,0,0.05)]
+                  ${isTextExpanded ? 'rounded-t-[2.5rem] mt-0' : 'rounded-t-[2rem] mt-4'}
+                `}
+              onTouchStart={handleCardTouchStart}
+              onTouchEnd={handleCardTouchEnd}
+              onClick={(e) => {
+                if (e.target.closest('.header-trigger') || e.target.closest('.handle-trigger')) {
+                  setIsTextExpanded(!isTextExpanded);
+                }
+              }}
+            >
+              {/* Pull Handle */}
+              <div className="w-full flex justify-center py-3 handle-trigger flex-shrink-0">
+                <div className="w-10 h-1 rounded-full bg-gray-200"></div>
+              </div>
+
+              {/* Header Row */}
+              <div className="px-6 flex items-center justify-between gap-4 mb-2 header-trigger flex-shrink-0">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl font-bold text-gray-900 truncate mb-1">
+                    {getLocalized(template?.name, language)}
+                  </h2>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(template?.tags || []).slice(0, 2).map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-2 py-0.5 rounded bg-gray-100 border border-gray-200 text-[9px] font-bold text-gray-500 uppercase"
+                      >
+                        {displayTag(tag)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (template) {
+                      setActiveTemplateId(template.id);
+                      setDiscoveryView(false);
+                      if (setMobileTab) setMobileTab('editor');
+                      setZoomedImage(null);
+                    }
+                  }}
+                  className="px-5 py-2.5 bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-xl font-bold text-sm shadow-[0_4px_15px_rgba(249,115,22,0.3)] active:scale-95 transition-all flex items-center gap-2 flex-shrink-0 border border-orange-400/20"
+                >
+                  <Sparkles size={16} />
+                  {t('use_template')}
+                </button>
+              </div>
+
+              {/* Content Area */}
+              <div
+                className={`px-6 flex-1 overflow-hidden flex flex-col transition-all duration-500 content-scroll-area ${isTextExpanded ? 'opacity-100 mt-4' : 'opacity-0 h-0 pointer-events-none'}`}
+              >
+                <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+                  <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+                    Prompt Content
+                  </h3>
+                  <div className="h-px flex-1 bg-gray-100"></div>
+                </div>
+                <div
+                  className="flex-1 overflow-y-auto custom-scrollbar text-gray-600 text-sm leading-relaxed whitespace-pre-wrap pb-32 overscroll-contain touch-pan-y"
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                >
+                  {getLocalized(template?.content, language)}
+                </div>
+              </div>
+
+              {/* Hint for non-expanded state */}
+              {!isTextExpanded && (
+                <div className="px-6 pb-24 text-[10px] font-medium text-gray-400 animate-pulse text-center flex-shrink-0">
+                  點擊卡片或向上滑動查看詳細內容
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-500 overflow-hidden"
+        onMouseMove={(e) => !isMobile && setModalMousePos({ x: e.clientX, y: e.clientY })}
+        onClick={() => setZoomedImage(null)}
+      >
+        {/* Background Layer - Static image + deep mask to prevent flickering from discovery view */}
+        <div
+          className="absolute inset-0 z-[-1] bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: 'url(/background1.png)',
+          }}
+        >
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-3xl"></div>
+        </div>
+
+        <button
+          className="absolute top-6 right-6 md:top-8 md:right-8 text-white/40 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10 z-[120]"
+          onClick={() => setZoomedImage(null)}
+        >
+          <X size={isMobile ? 24 : 32} />
+        </button>
+
+        <div
+          className="max-w-7xl w-full h-full md:h-auto flex flex-col md:flex-row items-center justify-center gap-6 md:gap-20 z-[110]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Left: Image Section with 3D Effect */}
+          <div
+            className={`flex-shrink-0 flex justify-center items-center perspective-[1000px] relative group/modal-img flex-1`}
+            style={{ perspective: '1200px' }}
+          >
+            <div
+              className="relative transition-transform duration-200 ease-out h-full flex items-center justify-center"
+              style={{
+                transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+                transformStyle: 'preserve-3d',
+              }}
+            >
+              <div
+                className="absolute inset-4 bg-black/40 blur-3xl rounded-3xl -z-10 transition-opacity duration-500"
+                style={{ transform: 'translateZ(-50px)' }}
+              />
+
+              <img
+                key={currentImageUrl}
+                src={currentImageUrl}
+                alt="Zoomed Preview"
+                className={`max-w-full rounded-2xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-white/20 animate-in fade-in duration-300 max-h-[75vh] object-contain`}
+                style={{ transform: 'translateZ(20px)' }}
+              />
+            </div>
+
+            {/* Navigation & Indicator */}
+            {allImages.length > 1 && (
+              <div
+                className={`absolute left-1/2 -translate-x-1/2 flex items-center gap-6 z-30 -bottom-12`}
+              >
+                <button
+                  onClick={handlePrev}
+                  className="p-1.5 rounded-full bg-white/5 hover:bg-white/20 text-white/50 hover:text-white transition-all backdrop-blur-md border border-white/10"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                {/* Dots Indicator */}
+                <div className="flex gap-2">
+                  {allImages.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex ? 'bg-orange-500 w-3' : 'bg-white/20'}`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={handleNext}
+                  className="p-1.5 rounded-full bg-white/5 hover:bg-white/20 text-white/50 hover:text-white transition-all backdrop-blur-md border border-white/10"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Info & Prompt Section */}
+          <div
+            className={`flex flex-col items-start animate-in slide-in-from-right-10 duration-700 delay-150 overflow-hidden w-full md:w-[450px] mt-auto`}
+          >
+            {template ? (
+              <>
+                <div className={`mb-4 md:mb-8`}>
+                  <h2
+                    className={`font-bold text-white mb-2 md:mb-4 tracking-tight leading-tight text-4xl md:text-5xl`}
+                  >
+                    {getLocalized(template.name, language)}
+                  </h2>
+                  <div className="flex flex-wrap gap-2 opacity-80">
+                    {(template.tags || []).map((tag) => (
+                      <span
+                        key={tag}
+                        className={`px-2 py-0.5 md:px-3 md:py-1 rounded-lg text-[10px] md:text-[11px] font-bold tracking-wider uppercase border border-white/20 bg-white/5 text-white`}
+                      >
+                        {displayTag(tag)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={`w-full mb-6 md:mb-10 flex-1 overflow-hidden flex flex-col`}>
+                  <div className="flex items-center gap-4 mb-3">
+                    <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">
+                      Content
+                    </h3>
+                    <div className="h-px flex-1 bg-white/10"></div>
+                  </div>
+                  <div
+                    className={`text-white/80 leading-relaxed whitespace-pre-wrap font-medium overflow-y-auto custom-scrollbar-white pr-4 text-base md:text-lg max-h-[40vh]`}
+                  >
+                    {getLocalized(template.content, language)}
+                  </div>
+                </div>
+
+                <div className={`w-full flex flex-col gap-4 mt-auto`}>
+                  <PremiumButton
+                    onClick={() => {
+                      setActiveTemplateId(template.id);
+                      setDiscoveryView(false);
+                      setZoomedImage(null);
+                    }}
+                    icon={Sparkles}
+                    color="slate"
+                    hoverColor="orange"
+                    active={true}
+                    className={`w-full font-black shadow-2xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-3 !py-5 !rounded-2xl !text-lg hover:-translate-y-1`}
+                  >
+                    {t('use_template') || '使用此模板'}
+                  </PremiumButton>
+
+                  <div className="flex items-center justify-between px-2">
+                    <p className="text-[10px] text-white/30 font-bold tracking-widest uppercase">
+                      Prompt Fill Original
+                    </p>
+                    <div className="flex gap-4">
+                      <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-white/20 gap-4 w-full">
+                <ImageIcon size={64} strokeWidth={1} />
+                <p className="text-lg font-bold tracking-widest uppercase">No Data Found</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+ImagePreviewModal.displayName = 'ImagePreviewModal';
