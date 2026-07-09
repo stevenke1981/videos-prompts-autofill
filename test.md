@@ -6,7 +6,7 @@
 
 | 層級 | 工具 | 範圍 |
 |------|------|------|
-| 單元 | Vitest | promptEngine、merge、helpers、storage、deliverables、seedData、communitySearch、discoveryFeed、communityCatalogLoader |
+| 單元 | Vitest | promptEngine、merge、helpers、storage、deliverables、seedData、communitySearch、discoveryFeed、communityCatalogLoader、DiscoveryView accessibility |
 | 靜態檢查 | ESLint | JavaScript / JSX runtime 與 React 規則 |
 | 建置 | vite build + bundle gate | 生產打包、平台 chunk 與 500 KiB 上限 |
 | E2E | Playwright | 統一瀑布流、填空、複製、社群匯入、詞庫、深色模式 |
@@ -83,7 +83,13 @@ npm run dev           # 開發伺服器 :1420
 | CL-04 | 背景載入部分失敗 | 其他平台繼續載入，錯誤限於單一平台 |
 | CL-05 | 合併同平台 payload | 取代該平台 slice，不重複提示詞 |
 
-### 3.8 其餘（helpers、storage、useKeyboardShortcuts）— 沿用
+### 3.8 DiscoveryView accessibility
+
+| ID | 案例 | 預期 |
+|----|------|------|
+| DV-A11Y-01 | 發現頁主要互動控制 | 搜尋、來源/平台/分類篩選、排序、頁首按鈕與社群載入狀態皆有 accessible name 或 live status |
+
+### 3.9 其餘（helpers、storage、useKeyboardShortcuts）— 沿用
 
 ---
 
@@ -153,3 +159,17 @@ npm run dev           # 開發伺服器 :1420
 | `npm run test:e2e` | ✅ 4/4 |
 
 改善前 production JS 入口為 874,180 bytes；改善後為 202,829 bytes，縮小約 76.8%。非阻斷提示：`caniuse-lite` 約 7 個月未更新。
+
+---
+
+## 8. 2026-07-09 實際驗證結果
+
+| 指令 | 結果 |
+|------|------|
+| `npm test -- src/__tests__/discoveryViewAccessibility.test.jsx` | ✅ 1 file / 1 test |
+| `npm test` | ✅ 11 files / 67 tests |
+| `npm run lint` | ✅ 0 error / 0 warning |
+| `npm run build:check` | ✅ 14 個 JS chunks；入口 203,850 bytes；全部低於 500 KiB |
+| `npm run test:e2e` | ✅ 4/4 |
+
+本輪補上前次 CBM 報告列出的無障礙元件測試缺口；release build 仍只有既有 `caniuse-lite` 過期提示，未阻斷建置。

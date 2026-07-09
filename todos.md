@@ -51,7 +51,7 @@
 |----|------|------|------|
 | P3-1 | seedData.test.js 更新 | ✅ | 影片種子驗證 |
 | P3-2 | communitySearch.test.js | ✅ | 搜尋單元測試 |
-| P3-3 | npm test | ✅ | 60/60 |
+| P3-3 | npm test | ✅ | 67/67 |
 | P3-4 | npm run build | ✅ | 零錯誤 |
 | P3-5 | npm run test:e2e | ✅ | 4/4 |
 | P3-6 | 更新 final.md | ✅ | |
@@ -87,7 +87,16 @@
 | P5-4 | DiscoveryView 漸進載入、進度與局部錯誤 UI | ✅ | 內建先顯示、平台可優先載入 |
 | P5-5 | 修復平台分類渲染崩潰 | ✅ | Seedance 平台 E2E 通過 |
 | P5-6 | 建立 bundle 大小閘門 | ✅ | 14 chunks，全部低於 500 KiB |
-| P5-7 | 文件、CBM 與完整驗證 | ✅ | 66 unit / 4 E2E |
+| P5-7 | 文件、CBM 與完整驗證 | ✅ | 67 unit / 4 E2E |
+
+---
+
+## Phase 6 — 無障礙回歸補強
+
+| ID | 任務 | 狀態 | 驗收 |
+|----|------|------|------|
+| P6-1 | 補強發現頁可存取名稱與 live status | ✅ | 搜尋、來源/平台/分類、排序、頁首按鈕與社群載入狀態皆有可測試 accessible name |
+| P6-2 | 新增 DiscoveryView accessibility 單元測試 | ✅ | `discoveryViewAccessibility.test.jsx` |
 
 ---
 
@@ -101,6 +110,7 @@
 | Phase 3 | 8 | 8 | 100% |
 | Phase 4 | 10 | 10 | 100% |
 | Phase 5 | 7 | 7 | 100% |
-| **合計** | **45** | **45** | **100%** |
+| Phase 6 | 2 | 2 | 100% |
+| **合計** | **47** | **47** | **100%** |
 
-*最後更新：2026-07-06*
+*最後更新：2026-07-09*

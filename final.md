@@ -1,7 +1,7 @@
 # Video Prompts Autofill — 交付摘要
 
 > 狀態：**全部完成**  
-> 最後更新：2026-07-06
+> 最後更新：2026-07-09
 
 ---
 
@@ -15,8 +15,8 @@
 
 | 檢查項 | 結果 |
 |--------|------|
-| `npm run build:check` | ✅ 14 個 JS chunks，全部低於 500 KiB |
-| `npm test`（Vitest） | ✅ 66/66（10 files） |
+| `npm run build:check` | ✅ 14 個 JS chunks，入口 203,850 bytes，全部低於 500 KiB |
+| `npm test`（Vitest） | ✅ 67/67（11 files） |
 | `npm run lint`（ESLint） | ✅ 0 error / 0 warning |
 | `npm run test:e2e`（Playwright） | ✅ 4/4 |
 | 開發伺服器 | ✅ http://localhost:1420 |
@@ -60,6 +60,8 @@
 - 新增共用 in-flight Promise、成功快取、平台局部錯誤與重試；切換平台會優先載入該平台。
 - 新增 `build:check`，每個 production JavaScript chunk 上限為 500 KiB。
 - 入口 chunk 從 874,180 降至 202,829 bytes，縮小約 76.8%。
+- 補強發現頁可存取性：搜尋框、篩選群組、排序、頁首 icon-only 控制與社群載入狀態皆有 accessible name / live status。
+- 新增 `DiscoveryView` accessibility 單元測試，覆蓋平台切換後的分類篩選可辨識性。
 
 ### 內建模板一覽
 
@@ -94,7 +96,7 @@
 npm install
 npm run dev          # http://localhost:1420
 npm run build:check
-npm test             # 66 案例
+npm test             # 67 案例
 npm run lint
 npm run test:e2e     # 4 smoke 案例
 ```

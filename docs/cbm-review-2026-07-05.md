@@ -20,6 +20,7 @@
 | P1 | 社群 1,000 筆資料同步進入主 bundle | 首頁必須先下載完整 catalog，production JS 達 874,180 bytes | 以 10 個平台 dynamic import、Promise cache 與背景漸進載入拆分 |
 | P1 | 切換到已載入平台時分類標籤呼叫已移除函式 | React 在平台分類列渲染時崩潰 | 改用 payload 衍生的 category label map，並由平台 E2E 覆蓋 |
 | P2 | 建置只有 Vite 警告，沒有可執行的 bundle 上限 | 後續改動可能讓入口重新膨脹而未阻擋 | 新增 `npm run build:check`，任何 JS chunk 超過 500 KiB 即失敗 |
+| P2 | 發現頁主要互動控制缺少元件層無障礙回歸測試 | UI 改版時可能退化搜尋、篩選、排序或載入狀態的可辨識性 | 補 `aria-label`、`role="group"`、`role="status"`，並新增 `DiscoveryView` accessibility test |
 
 ## 架構結果
 
@@ -41,11 +42,21 @@
 | `npm run build:check` | 通過；14 個 JS chunks，入口 202,829 bytes，全部低於 500 KiB |
 | `npm run test:e2e` | 4/4 通過 |
 
+### 2026-07-09 追加驗證
+
+| 指令 | 結果 |
+|---|---|
+| `npm test -- src/__tests__/discoveryViewAccessibility.test.jsx` | 1 file，1 test，通過 |
+| `npm test` | 11 files，67 tests，全數通過 |
+| `npm run lint` | 通過，0 error / 0 warning |
+| `npm run build:check` | 通過；14 個 JS chunks，入口 203,850 bytes，全部低於 500 KiB |
+| `npm run test:e2e` | 4/4 通過 |
+
 ## 後續優化建議
 
 1. **縮小 `App.jsx`**：檔案約 100 KB，包含儲存、分享、匯入匯出、編輯與 UI orchestration。建議先抽出 export/import 與 File System Access service，再恢復嚴格 `no-unused-vars`、`react-hooks/exhaustive-deps`。
 2. **更新 Browserslist 資料**：建置提示 `caniuse-lite` 已約 7 個月未更新；應在獨立維護提交中執行，避免本次功能 commit 混入 lockfile 噪音。
-3. **補無障礙元件測試**：目前 E2E 已覆蓋主要鍵盤可達按鈕，但尚未加入 axe 或完整鍵盤巡覽測試。
+3. **更完整鍵盤巡覽 / axe 掃描**：目前已補元件層 accessible name 與 live status 回歸測試；若要進一步提高信心，可於獨立提交加入 axe 或完整 Tab order E2E。
 
 ## 未做的事項
 

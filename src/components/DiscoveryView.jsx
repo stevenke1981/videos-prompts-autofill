@@ -310,6 +310,7 @@ export const DiscoveryView = React.memo(
                 onClick={() => setDiscoveryView(false)}
                 className="flex items-center gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-orange-500 dark:bg-orange-500 dark:hover:bg-orange-400"
                 title={t('back_to_editor')}
+                aria-label={t('back_to_editor')}
               >
                 <Edit3 className="h-4 w-4" />
                 <span className="hidden xl:inline">{t('back_to_editor')}</span>
@@ -319,6 +320,7 @@ export const DiscoveryView = React.memo(
                 onClick={() => setLanguage(language === 'zh-tw' ? 'en' : 'zh-tw')}
                 className="rounded-xl border border-white/70 bg-white/70 p-2.5 text-slate-600 shadow-sm transition-colors hover:text-orange-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 title={language === 'zh-tw' ? 'English' : '繁體中文'}
+                aria-label={language === 'zh-tw' ? 'English' : '繁體中文'}
               >
                 <Globe className="h-5 w-5" />
               </button>
@@ -327,6 +329,7 @@ export const DiscoveryView = React.memo(
                 onClick={() => setIsSettingsOpen(true)}
                 className="rounded-xl border border-white/70 bg-white/70 p-2.5 text-slate-600 shadow-sm transition-colors hover:text-orange-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 title={t('settings')}
+                aria-label={t('settings')}
               >
                 <Settings className="h-5 w-5" />
               </button>
@@ -335,6 +338,7 @@ export const DiscoveryView = React.memo(
                 onClick={handleRefreshSystemData}
                 className="rounded-xl border border-white/70 bg-white/70 p-2.5 text-slate-600 shadow-sm transition-colors hover:text-orange-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 title={t('refresh_desc')}
+                aria-label={t('refresh_desc')}
               >
                 <RotateCcw className="h-5 w-5" />
               </button>
@@ -344,6 +348,7 @@ export const DiscoveryView = React.memo(
                 rel="noopener noreferrer"
                 className="rounded-xl border border-white/70 bg-white/70 p-2.5 text-slate-600 shadow-sm transition-colors hover:text-slate-950 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 title={t('github_link')}
+                aria-label={t('github_link')}
               >
                 <Github className="h-5 w-5" />
               </a>
@@ -359,11 +364,16 @@ export const DiscoveryView = React.memo(
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder={t('discovery_search_all')}
+                  aria-label={t('discovery_search_all')}
                   className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100 dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:ring-orange-950"
                 />
               </label>
 
-              <div className="flex flex-wrap gap-2" aria-label={t('discovery_source_all')}>
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label={t('discovery_source_filter_label')}
+              >
                 {SOURCE_OPTIONS.map(({ value, labelKey, icon: Icon }) => (
                   <button
                     key={value}
@@ -385,6 +395,10 @@ export const DiscoveryView = React.memo(
                 <button
                   type="button"
                   onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+                  aria-label={`${t('discovery_sort_label')}: ${t(
+                    SORT_OPTIONS.find((item) => item.value === sortOrder)?.labelKey ||
+                      'sort_newest'
+                  )}`}
                   className="flex h-full min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 hover:border-orange-200 hover:text-orange-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
                 >
                   <ArrowUpDown className="h-3.5 w-3.5" />
@@ -408,7 +422,11 @@ export const DiscoveryView = React.memo(
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div
+              className="flex flex-wrap items-center gap-2"
+              role="group"
+              aria-label={t('discovery_platform_filter_label')}
+            >
               {platforms.map((itemPlatform) => (
                 <button
                   key={itemPlatform}
@@ -427,7 +445,11 @@ export const DiscoveryView = React.memo(
             </div>
 
             {categories.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+              <div
+                className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-slate-800"
+                role="group"
+                aria-label={t('discovery_category_filter_label')}
+              >
                 <button
                   type="button"
                   onClick={() => setCategory('all')}
@@ -463,7 +485,9 @@ export const DiscoveryView = React.memo(
             </p>
             <div
               data-testid="community-load-status"
+              role="status"
               aria-live="polite"
+              aria-label={t('community_load_status_label')}
               className="flex flex-wrap items-center gap-2 rounded-xl bg-slate-100/80 px-3 py-2 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-200"
             >
               <span>
