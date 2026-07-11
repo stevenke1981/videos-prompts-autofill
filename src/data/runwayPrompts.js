@@ -19,7 +19,7 @@ const cp = (id, title, prompt, category, tags, likes) => ({
 
 export const RUNWAY_PROMPTS = [
   cp('runway_cinematic_01', { 'zh-tw': '森林漫步 Steadicam', en: 'Forest walk Steadicam' },
-    { 'zh-tw': 'Cinematic 10s sequence. Steadicam follows a hiker walking through misty ancient forest, morning light filtering through canopy, photorealistic, subtle film grain, birds chirping.', en: 'Cinematic 10s sequence. Steadicam follows a hiker walking through misty ancient forest, morning light filtering through canopy, photorealistic, subtle film grain, birds chirping.' },
+    { 'zh-tw': '電影感 10 秒鏡頭。Steadicam 跟隨登山者走過薄霧籠罩的古老森林，晨光穿透樹冠，寫實質感、輕微膠片顆粒，伴隨鳥鳴。', en: 'Cinematic 10s sequence. Steadicam follows a hiker walking through misty ancient forest, morning light filtering through canopy, photorealistic, subtle film grain, birds chirping.' },
     'cinematic', ["gen-3","cinematic","runway"], 400),
   cp('runway_cinematic_02', { 'zh-tw': '雨夜霓虹巷弄', en: 'Rainy neon alley' },
     { 'zh-tw': '電影感 10 秒：雨夜霓虹巷弄，濕地面反射，人物撐傘緩行，手持微晃，青橙調色。', en: 'Cinematic 10s: rainy neon alley, wet reflective ground, figure with umbrella walks slowly, subtle handheld, teal-orange grade.' },

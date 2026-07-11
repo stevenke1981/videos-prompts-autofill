@@ -46,6 +46,7 @@ npm run dev           # 開發伺服器 :1420
 | SD-02 | 每模板 extractVariableKeys | 所有 key 在 banks 或 defaults |
 | SD-03 | SYSTEM_DATA_VERSION | 1.1.0，觸發舊封面遷移 |
 | SD-04 | 每個系統模板封面 | 唯一的本機 WebP 且檔案存在 |
+| SD-05 | 每個系統模板雙語內容 | 兩語非空、文案不同且變數集合一致 |
 
 ### 3.4 communitySearch.js（新增）
 
@@ -56,6 +57,9 @@ npm run dev           # 開發伺服器 :1420
 | CS-03 | 平台篩選 seedance | 全部 platform=seedance |
 | CS-04 | communityPromptToTemplate | 產生有效 Template 含 id/name/content |
 | CS-05 | COMMUNITY_DATA_VERSION | 非空字串 |
+| CS-06 | 社群提示詞匯入 | 保留 zh-tw / en 原始內容並補齊 5 個 Video Specs 欄位 |
+| CS-07 | 平台建議 | 依匯入項目的平台解析對應雙語建議 |
+| CS-08 | Runway 繁中提示詞 | 不得與英文內容相同 |
 
 ### 3.5 discoveryFeed.js（新增）
 
@@ -173,3 +177,17 @@ npm run dev           # 開發伺服器 :1420
 | `npm run test:e2e` | ✅ 4/4 |
 
 本輪補上前次 CBM 報告列出的無障礙元件測試缺口；release build 仍只有既有 `caniuse-lite` 過期提示，未阻斷建置。
+
+---
+
+## 9. 2026-07-12 實際驗證結果
+
+| 指令 | 結果 |
+|------|------|
+| `npm test -- src/__tests__/communitySearch.test.js src/__tests__/deliverables.test.js src/__tests__/seedData.test.js` | ✅ 3 files / 30 tests |
+| `npm test` | ✅ 11 files / 70 tests |
+| `npm run lint` | ✅ 0 error / 0 warning |
+| `npm run build:check` | ✅ 14 個 JS chunks；入口 205,809 bytes；全部低於 500 KiB |
+| `npm run test:e2e` | ✅ 4/4 |
+
+本輪修正社群匯入只保留單一語言且缺少影片技術規格的問題；1,000 筆社群提示詞現在會保留雙語內容、補上 Video Specs，並依平台帶入雙語提示建議。同時修正 Runway 內建模板與一筆社群提示誤用英文作為繁中內容，並加入雙語資料品質閘門。

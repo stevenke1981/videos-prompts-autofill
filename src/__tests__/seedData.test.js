@@ -49,4 +49,16 @@ describe('video seed data', () => {
       });
     });
   });
+
+  it('all system templates have distinct bilingual copy with matching variables', () => {
+    INITIAL_TEMPLATES_CONFIG.forEach((template) => {
+      const zhContent = getLocalized(template.content, 'zh-tw');
+      const enContent = getLocalized(template.content, 'en');
+
+      expect(zhContent.trim(), `Missing zh-tw content for ${template.id}`).not.toBe('');
+      expect(enContent.trim(), `Missing en content for ${template.id}`).not.toBe('');
+      expect(zhContent, `Unlocalized zh-tw content for ${template.id}`).not.toBe(enContent);
+      expect(extractVariableKeys(zhContent).sort()).toEqual(extractVariableKeys(enContent).sort());
+    });
+  });
 });

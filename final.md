@@ -1,7 +1,7 @@
 # Video Prompts Autofill — 交付摘要
 
 > 狀態：**全部完成**  
-> 最後更新：2026-07-09
+> 最後更新：2026-07-12
 
 ---
 
@@ -15,8 +15,8 @@
 
 | 檢查項 | 結果 |
 |--------|------|
-| `npm run build:check` | ✅ 14 個 JS chunks，入口 203,850 bytes，全部低於 500 KiB |
-| `npm test`（Vitest） | ✅ 67/67（11 files） |
+| `npm run build:check` | ✅ 14 個 JS chunks，入口 205,809 bytes，全部低於 500 KiB |
+| `npm test`（Vitest） | ✅ 70/70（11 files） |
 | `npm run lint`（ESLint） | ✅ 0 error / 0 warning |
 | `npm run test:e2e`（Playwright） | ✅ 4/4 |
 | 開發伺服器 | ✅ http://localhost:1420 |
@@ -44,7 +44,7 @@
 | 封面總大小 | 約 1.60 MiB WebP | ✅ |
 | 首次卡片渲染 | 24 筆 | ✅ |
 | 社群平台動態 chunks | 10 | ✅ |
-| 主入口 JavaScript | 202,829 bytes（改善前 874,180） | ✅ |
+| 主入口 JavaScript | 205,809 bytes（改善前 874,180） | ✅ |
 
 ### 本次 CBM 改善
 
@@ -59,9 +59,12 @@
 - 社群 catalog 依 general、Seedance、Kling、Grok、Runway、Sora、Pika、MiniMax、Luma、Hailuo 分割載入。
 - 新增共用 in-flight Promise、成功快取、平台局部錯誤與重試；切換平台會優先載入該平台。
 - 新增 `build:check`，每個 production JavaScript chunk 上限為 500 KiB。
-- 入口 chunk 從 874,180 降至 202,829 bytes，縮小約 76.8%。
+- 入口 chunk 從 874,180 降至 205,809 bytes，縮小約 76.5%。
 - 補強發現頁可存取性：搜尋框、篩選群組、排序、頁首 icon-only 控制與社群載入狀態皆有 accessible name / live status。
 - 新增 `DiscoveryView` accessibility 單元測試，覆蓋平台切換後的分類篩選可辨識性。
+- 社群提示詞匯入不再壓成單一語言字串；中英文原始內容會完整保留。
+- 1,000 筆社群提示詞匯入時統一補上時長、畫幅、幀率、負向提示與平台建議，並依 10 種平台帶入雙語生成要點。
+- 修正 Runway 內建模板與社群提示的繁中內容缺漏，並新增全體內建模板雙語文案與變數一致性測試。
 
 ### 內建模板一覽
 
@@ -96,7 +99,7 @@
 npm install
 npm run dev          # http://localhost:1420
 npm run build:check
-npm test             # 67 案例
+npm test             # 70 案例
 npm run lint
 npm run test:e2e     # 4 smoke 案例
 ```
@@ -120,6 +123,7 @@ npm run test:e2e     # 4 smoke 案例
 
 ## 6. 已知後續工作
 
+- `INITIAL_DEFAULTS` 仍是繁中純字串，英文模板首次解析可能混入中文預設值；應以相容舊儲存資料的 migration 獨立處理。
 - `caniuse-lite` 約 7 個月未更新，應於獨立 dependency-maintenance commit 更新。
 - `App.jsx` 約 100 KB；建議先抽離匯入匯出與 File System Access service，再逐步恢復嚴格 unused / Hook dependency lint 規則。
 

@@ -31,6 +31,7 @@ import { GROK_IMAGINE_PROMPTS } from '../data/grokImaginePrompts';
 import { RUNWAY_PROMPTS } from '../data/runwayPrompts';
 import { SORA_PROMPTS } from '../data/soraPrompts';
 import { communityPromptToTemplate as lightweightCommunityPromptToTemplate } from '../services/communityTemplate';
+import { extractVariableKeys, resolvePrompt } from '../utils/promptEngine';
 
 describe('communitySearch', () => {
   it('has exactly 300 prompts per major platform', () => {
@@ -51,6 +52,13 @@ describe('communitySearch', () => {
     expect(HAILUO_COUNT).toBe(7);
     expect(RUNWAY_PROMPTS.length).toBe(30);
     expect(SORA_PROMPTS.length).toBe(30);
+  });
+
+  it('keeps localized Runway prompt copy distinct', () => {
+    const prompt = RUNWAY_PROMPTS.find((item) => item.id === 'runway_cinematic_01');
+
+    expect(prompt.prompt['zh-tw']).toContain('電影感 10 秒鏡頭');
+    expect(prompt.prompt['zh-tw']).not.toBe(prompt.prompt.en);
   });
 
   it('returns exactly 1000 total community prompts', () => {
@@ -140,6 +148,28 @@ describe('communitySearch', () => {
 
     expect(template.name).toBe('Fixture（社群）');
     expect(template.tags).toEqual(['seedance', 'cinematic']);
+  });
+
+  it('preserves bilingual community prompts and completes video specs', () => {
+    const template = lightweightCommunityPromptToTemplate(
+      {
+        id: 'bilingual-fixture',
+        title: { 'zh-tw': '雙語測試', en: 'Bilingual fixture' },
+        prompt: { 'zh-tw': '中文原始提示', en: 'Original English prompt' },
+        platform: 'seedance',
+        tags: ['multimodal'],
+      },
+      'en'
+    );
+
+    expect(template.content['zh-tw']).toContain('中文原始提示');
+    expect(template.content.en).toContain('Original English prompt');
+    expect(extractVariableKeys(template.content)).toEqual(
+      expect.arrayContaining(['duration', 'aspect_ratio', 'fps', 'negative_prompt', 'platform_hint'])
+    );
+    expect(resolvePrompt(template.content, template.selections, {}, 'en')).toContain(
+      'Seedance — describe motion naturally'
+    );
   });
 
   it('has community data version 1.3.0', () => {

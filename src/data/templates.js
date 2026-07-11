@@ -228,11 +228,11 @@ Concise visual metaphor, {{camera_shot}}.`,
     platform: 'runway',
     imageUrl: './template-covers/video/runway-narrative.webp',
     content: {
-      'zh-tw': `Cinematic {{duration}} sequence.
-{{camera_movement}} through {{environment}} at {{time_of_day}}.
-{{subject}} {{subject_action}}, mood: {{narrative_tone}}.
-{{visual_style}}, {{lighting}}, {{film_grain}}.
-Sound design: {{audio_ambient}}.`,
+      'zh-tw': `電影感 {{duration}} 敘事鏡頭。
+{{camera_movement}} 穿越 {{time_of_day}} 的 {{environment}}。
+{{subject}} {{subject_action}}，情緒基調：{{narrative_tone}}。
+{{visual_style}}，{{lighting}}，{{film_grain}}。
+聲音設計：{{audio_ambient}}。`,
       en: `Cinematic {{duration}} sequence.
 {{camera_movement}} through {{environment}} at {{time_of_day}}.
 {{subject}} {{subject_action}}, mood: {{narrative_tone}}.
