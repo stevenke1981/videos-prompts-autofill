@@ -15,6 +15,7 @@ import {
   Crown,
 } from 'lucide-react';
 import { getLocalized } from '../utils/helpers';
+import { getLocalizedBankValue } from '../data/banks';
 import { resolveImageUrl, isIdbReference } from '../services/storage';
 
 /**
@@ -127,7 +128,8 @@ export const TemplatePreview = React.memo(
           counters[key] = varIndex + 1;
 
           const uniqueKey = `${key}-${varIndex}`;
-          const currentValue = activeTemplate.selections[uniqueKey] || defaults[key];
+          const storedValue = activeTemplate.selections[uniqueKey] ?? defaults[key];
+          const currentValue = getLocalizedBankValue(key, storedValue, language);
 
           return (
             <Variable

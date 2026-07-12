@@ -23,6 +23,7 @@
 | P2 | 發現頁主要互動控制缺少元件層無障礙回歸測試 | UI 改版時可能退化搜尋、篩選、排序或載入狀態的可辨識性 | 補 `aria-label`、`role="group"`、`role="status"`，並新增 `DiscoveryView` accessibility test |
 | P1 | 社群提示詞匯入時把雙語內容壓成單一字串，且未套用 Video Specs | 切換語言仍顯示匯入時的語言；1,000 筆社群模板缺少時長、畫幅、幀率、負向提示與平台建議 | 匯入時保留雙語 prompt、套用 `withDeliverables`，並依平台填入雙語生成建議 |
 | P1 | Runway 內建模板與一筆社群提示的繁中欄位實際存放英文 | 繁中介面出現整段英文，既有測試只驗數量而未攔截 | 補上繁中內容，新增模板雙語文案與變數集合一致性測試及 Runway 回歸測試 |
+| P1 | legacy `INITIAL_DEFAULTS` 為繁中字串，英文解析會混入中文 | 既有使用者的英文模板輸出不完整且中英混雜 | `resolvePrompt` 與 `TemplatePreview` 依詞庫中英文雙向映射；無法辨識的自訂值保持原樣 |
 
 ## 架構結果
 
@@ -59,14 +60,14 @@
 | 指令 | 結果 |
 |---|---|
 | `npm test -- src/__tests__/communitySearch.test.js src/__tests__/deliverables.test.js src/__tests__/seedData.test.js` | 3 files，30 tests，全數通過 |
-| `npm test` | 11 files，70 tests，全數通過 |
+| `npm test` | 11 files，73 tests，全數通過 |
 | `npm run lint` | 通過，0 error / 0 warning |
-| `npm run build:check` | 通過；14 個 JavaScript chunks，入口 205,809 bytes，全部低於 500 KiB |
+| `npm run build:check` | 通過；14 個 JavaScript chunks，入口 206,058 bytes，全部低於 500 KiB |
 | `npm run test:e2e` | 4/4 通過 |
 
 ## 後續優化建議
 
-1. **遷移雙語預設值**：`INITIAL_DEFAULTS` 目前仍是繁中字串，英文模板首次解析時會混入中文值。建議將 defaults 正規化為雙語物件，同時保留舊 LocalStorage 字串格式的相容遷移與 E2E 覆蓋。
+1. **資料形狀遷移**：目前以執行期映射保留舊 LocalStorage 字串格式；若未來要將 defaults/selections 正規化為雙語物件，需補上匯入、分享與資料夾載入的相容 migration。
 2. **縮小 `App.jsx`**：檔案約 100 KB，包含儲存、分享、匯入匯出、編輯與 UI orchestration。建議先抽出 export/import 與 File System Access service，再恢復嚴格 `no-unused-vars`、`react-hooks/exhaustive-deps`。
 3. **更新 Browserslist 資料**：建置提示 `caniuse-lite` 已約 7 個月未更新；應在獨立維護提交中執行，避免本次功能 commit 混入 lockfile 噪音。
 4. **更完整鍵盤巡覽 / axe 掃描**：目前已補元件層 accessible name 與 live status 回歸測試；若要進一步提高信心，可於獨立提交加入 axe 或完整 Tab order E2E。

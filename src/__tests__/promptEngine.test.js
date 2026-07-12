@@ -7,6 +7,7 @@ import {
   countStats,
   extractVariableKeys,
 } from '../utils/promptEngine';
+import { INITIAL_DEFAULTS } from '../data/banks';
 
 describe('promptEngine', () => {
   it('PE-01: parseVariables basic', () => {
@@ -35,6 +36,32 @@ describe('promptEngine', () => {
       'en'
     );
     expect(result).toBe('Artist');
+  });
+
+  it('resolves legacy Chinese defaults to English bank options', () => {
+    const result = resolvePrompt(
+      '{{subject}} | {{duration}} | {{negative_prompt}}',
+      {},
+      INITIAL_DEFAULTS,
+      'en'
+    );
+
+    expect(result).toBe('A young woman | 10 seconds | blurry, low quality, deformed, extra fingers');
+  });
+
+  it('preserves custom string defaults in English mode', () => {
+    const result = resolvePrompt('{{subject}}', {}, { subject: '自訂角色' }, 'en');
+
+    expect(result).toBe('自訂角色');
+  });
+
+  it('localizes legacy string selections in both directions', () => {
+    expect(resolvePrompt('{{subject}}', { 'subject-0': '一位年輕女性' }, {}, 'en')).toBe(
+      'A young woman'
+    );
+    expect(resolvePrompt('{{subject}}', { 'subject-0': 'A young woman' }, {}, 'zh-tw')).toBe(
+      '一位年輕女性'
+    );
   });
 
   it('PE-07: resolvePrompt multi instance', () => {

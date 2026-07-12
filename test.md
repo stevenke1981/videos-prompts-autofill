@@ -28,7 +28,9 @@ npm run dev           # 開發伺服器 :1420
 
 ## 3. 單元測試
 
-### 3.1 promptEngine.js — 沿用（PE-01 ~ PE-10）
+### 3.1 promptEngine.js — 沿用（PE-01 ~ PE-13）
+
+PE-11 / PE-12 / PE-13：英文模式會將 legacy 繁中字串 defaults/selections 映射到詞庫英文選項；使用者自訂字串不被覆寫，且中英文可雙向解析。
 
 ### 3.2 deliverables.js — Video Specs 版
 
@@ -184,10 +186,10 @@ npm run dev           # 開發伺服器 :1420
 
 | 指令 | 結果 |
 |------|------|
-| `npm test -- src/__tests__/communitySearch.test.js src/__tests__/deliverables.test.js src/__tests__/seedData.test.js` | ✅ 3 files / 30 tests |
-| `npm test` | ✅ 11 files / 70 tests |
+| `npm test -- src/__tests__/communitySearch.test.js src/__tests__/deliverables.test.js src/__tests__/seedData.test.js src/__tests__/promptEngine.test.js` | ✅ 4 files / 43 tests |
+| `npm test` | ✅ 11 files / 73 tests |
 | `npm run lint` | ✅ 0 error / 0 warning |
-| `npm run build:check` | ✅ 14 個 JS chunks；入口 205,809 bytes；全部低於 500 KiB |
+| `npm run build:check` | ✅ 14 個 JS chunks；入口 206,058 bytes；全部低於 500 KiB |
 | `npm run test:e2e` | ✅ 4/4 |
 
-本輪修正社群匯入只保留單一語言且缺少影片技術規格的問題；1,000 筆社群提示詞現在會保留雙語內容、補上 Video Specs，並依平台帶入雙語提示建議。同時修正 Runway 內建模板與一筆社群提示誤用英文作為繁中內容，並加入雙語資料品質閘門。
+本輪修正社群匯入只保留單一語言且缺少影片技術規格的問題；1,000 筆社群提示詞現在會保留雙語內容、補上 Video Specs，並依平台帶入雙語提示建議。同時修正 Runway 內建模板與一筆社群提示誤用英文作為繁中內容，加入雙語資料品質閘門，並讓英文模式正確解析既有繁中字串 defaults/selections。

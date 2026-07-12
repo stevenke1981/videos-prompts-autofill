@@ -98,19 +98,21 @@ videos-prompts-autofill/
 - [x] plan.md、spec.md、todos.md、test.md、final.md
 
 ### Phase 1 — 骨架與種子資料
-- [ ] 從 agent-prompt-fill 複製源碼
-- [ ] 替換 templates.js、banks.js、deliverables.js
-- [ ] 新增 communityPrompts.js、communitySearch.js
-- [ ] 更新翻譯、品牌、storage DB 名稱
+- [x] 從 agent-prompt-fill 複製源碼
+- [x] 替換 templates.js、banks.js、deliverables.js
+- [x] 新增 communityPrompts.js、communitySearch.js
+- [x] 更新翻譯、品牌、storage DB 名稱
 
 ### Phase 2 — 社群搜尋 UI
-- [ ] CommunitySearchPanel 元件
-- [ ] 發現頁整合「模板 / 社群」切換
-- [ ] 一鍵匯入社群提示詞為新模板
+- [x] CommunitySearchPanel 元件（後續由統一發現瀑布流取代）
+- [x] 發現頁整合「模板 / 社群」切換（後續整合為單一瀑布流）
+- [x] 一鍵匯入社群提示詞為新模板
 
 ### Phase 3 — 測試交付
-- [ ] npm test、npm run build、npm run test:e2e
-- [ ] 更新 final.md、驗收勾選
+- [x] npm test、npm run build、npm run test:e2e
+- [x] 更新 final.md、驗收勾選
+
+> Phase 4–7 已在 `todos.md` 追蹤統一瀑布流、平台分割載入、無障礙與提示詞完整化；本文件的早期階段勾選狀態已同步為目前主線結果。
 
 ---
 

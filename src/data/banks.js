@@ -485,3 +485,16 @@ export const INITIAL_DEFAULTS = {
   commercial_cta: '結尾品牌 Slogan 浮現',
   pacing: '中等節奏',
 };
+
+/** Resolve a legacy string value to its matching bilingual bank option. */
+export const getLocalizedBankValue = (key, value, language = 'zh-tw') => {
+  if (typeof value !== 'string') return value;
+
+  const option = INITIAL_BANKS[key]?.options?.find(
+    (candidate) =>
+      typeof candidate === 'object' &&
+      (candidate['zh-tw'] === value || candidate.en === value)
+  );
+
+  return option?.[language] || value;
+};

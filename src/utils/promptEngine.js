@@ -1,4 +1,5 @@
 import { getLocalized } from './helpers';
+import { getLocalizedBankValue } from '../data/banks';
 
 const VARIABLE_REGEX = /{{(.*?)}}/g;
 
@@ -37,7 +38,10 @@ export const resolvePrompt = (content, selections = {}, defaults = {}, language 
     counters[k] = idx + 1;
 
     const uniqueKey = getInstanceKey(k, idx);
-    const value = selections[uniqueKey] ?? selections[k] ?? defaults[k];
+    const selectedValue = selections[uniqueKey] ?? selections[k];
+    const value = selectedValue !== undefined && selectedValue !== null
+      ? getLocalizedBankValue(k, selectedValue, language)
+      : getLocalizedBankValue(k, defaults[k], language);
     return getLocalized(value, language) || match;
   });
 };
